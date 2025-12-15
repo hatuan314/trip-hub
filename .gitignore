@@ -205,3 +205,235 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# ============================================
+# Trip Hub Microservices Specific
+# ============================================
+
+# Environment variables and secrets
+.env
+.env.*
+.env.local
+.env.development
+.env.staging
+.env.production
+*.env
+!.env.example
+secrets/
+*.key
+*.pem
+*.crt
+*.p12
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+db_data/
+postgres_data/
+mysql_data/
+pgdata/
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+*.tar
+*.tar.gz
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+k8s-secrets/
+kustomization.yaml.bak
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+.terraform.lock.hcl
+terraform.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Logs
+logs/
+*.log
+*.log.*
+log/
+*.out
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# Redis dump
+dump.rdb
+appendonly.aof
+
+# Message Broker
+rabbitmq_data/
+kafka_data/
+
+# Monitoring & Observability
+prometheus_data/
+grafana_data/
+elasticsearch_data/
+kibana_data/
+
+# Cache
+.cache/
+*.cache
+cache/
+redis_cache/
+
+# IDE & Editors
+.idea/
+.vscode/
+.windsurf/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.tox/
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+test-results/
+test-reports/
+
+# Alembic
+alembic/versions/*.pyc
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+*.old
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# API Keys and Credentials
+**/credentials.json
+**/token.json
+**/service-account.json
+api_keys.txt
+credentials.txt
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Local development
+local/
+.local/
+dev/
+.dev/
+
+# Backup files
+*.backup
+*.bkp
+*~
+
+# Migration backups
+migrations/backup/
+
+# SSL Certificates
+*.csr
+*.der
+*.pfx
+
+# Package manager locks (optional - uncomment if needed)
+# poetry.lock
+# Pipfile.lock
+# uv.lock
+
+# Service-specific data directories
+services/*/data/
+services/*/logs/
+services/*/tmp/
+
+# Shared libraries build artifacts
+shared/libs/**/*.pyc
+shared/libs/**/__pycache__/
+
+# Documentation build
+docs/_build/
+docs/.doctrees/
+site/
+
+# Performance profiling
+*.prof
+*.lprof
+*.pstats
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*.ipynb
+
+# Python virtual environments in services
+services/**/venv/
+services/**/.venv/
+services/**/env/
+services/**/ENV/
+
+# Node modules (if any frontend tooling)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Compiled binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Archives
+*.zip
+*.rar
+*.7z
+*.gz
+*.bz2
+
+# CI/CD artifacts
+.github/workflows/*.log
+ci-cd/**/*.log
+
+# Helm charts
+charts/**/charts/
+charts/**/*.tgz
+
+# Local scripts (if any)
+local-scripts/
+*.local.sh
+
+# API documentation generated files
+docs/api/generated/
+
+# Load testing results
+load-test-results/
+performance-reports/
