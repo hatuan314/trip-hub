@@ -1,7 +1,7 @@
 # 📁 Cấu Trúc Dự Án Trip Hub - Travel Planning Application
 
 ## 🎯 Tổng Quan
-Ứng dụng lập kế hoạch du lịch với kiến trúc microservices, sử dụng FastAPI, Clean Architecture, Docker và Message Broker.
+Ứng dụng lập kế hoạch du lịch với kiến trúc microservices, sử dụng FastAPI, MVC Pattern, Docker và Message Broker.
 
 ## 🧱 Cấu Trúc Thư Mục
 
@@ -10,76 +10,81 @@ trip-hub/
 ├── services/                                    # Các microservices
 │   ├── user-service/                           # Service quản lý người dùng
 │   │   ├── src/
-│   │   │   ├── api/                           # API Layer (Controllers)
-│   │   │   │   ├── v1/
-│   │   │   │   │   ├── endpoints/
-│   │   │   │   │   │   ├── __init__.py
-│   │   │   │   │   │   ├── auth.py           # Đăng nhập, đăng ký
-│   │   │   │   │   │   ├── users.py          # CRUD người dùng
-│   │   │   │   │   │   └── profile.py        # Quản lý profile
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   └── router.py             # Tổng hợp routes
-│   │   │   │   └── dependencies.py            # FastAPI dependencies
+│   │   │   ├── controllers/                   # Controllers (C - MVC)
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── auth_controller.py         # Đăng nhập, đăng ký
+│   │   │   │   ├── user_controller.py         # CRUD người dùng
+│   │   │   │   └── profile_controller.py      # Quản lý profile
 │   │   │   │
-│   │   │   ├── core/                          # Application Core (Use Cases)
-│   │   │   │   ├── use_cases/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── register_user.py
-│   │   │   │   │   ├── authenticate_user.py
-│   │   │   │   │   ├── update_profile.py
-│   │   │   │   │   └── get_user_info.py
-│   │   │   │   ├── entities/                  # Domain Entities
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   └── user.py
-│   │   │   │   └── interfaces/                # Repository Interfaces
-│   │   │   │       ├── __init__.py
-│   │   │   │       └── user_repository.py
+│   │   │   ├── models/                        # Models (M - MVC)
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── user.py                    # SQLAlchemy User model
+│   │   │   │   ├── profile.py                 # SQLAlchemy Profile model
+│   │   │   │   └── session.py                 # SQLAlchemy Session model
 │   │   │   │
-│   │   │   ├── infrastructure/                # Infrastructure Layer
-│   │   │   │   ├── database/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── connection.py         # DB connection
-│   │   │   │   │   ├── models.py             # SQLAlchemy models
-│   │   │   │   │   └── repositories/
-│   │   │   │   │       ├── __init__.py
-│   │   │   │   │       └── user_repository_impl.py
-│   │   │   │   ├── messaging/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── publisher.py          # Message publisher
-│   │   │   │   │   └── consumer.py           # Message consumer
-│   │   │   │   ├── cache/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   └── redis_client.py
-│   │   │   │   └── external/
-│   │   │   │       ├── __init__.py
-│   │   │   │       └── email_service.py
+│   │   │   ├── views/                         # Views (V - MVC) - Response schemas
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── user_view.py               # User response schemas
+│   │   │   │   ├── auth_view.py               # Auth response schemas
+│   │   │   │   └── profile_view.py            # Profile response schemas
+│   │   │   │
+│   │   │   ├── services/                      # Business Logic Layer
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── auth_service.py            # Authentication logic
+│   │   │   │   ├── user_service.py            # User business logic
+│   │   │   │   └── profile_service.py         # Profile business logic
+│   │   │   │
+│   │   │   ├── repositories/                  # Data Access Layer
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── user_repository.py         # User data access
+│   │   │   │   └── profile_repository.py      # Profile data access
+│   │   │   │
+│   │   │   ├── routes/                        # API Routes
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── auth_routes.py             # Auth endpoints
+│   │   │   │   ├── user_routes.py             # User endpoints
+│   │   │   │   └── profile_routes.py          # Profile endpoints
+│   │   │   │
+│   │   │   ├── database/                      # Database configuration
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── connection.py              # DB connection
+│   │   │   │   └── base.py                    # Base model
+│   │   │   │
+│   │   │   ├── messaging/                     # Message broker
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── publisher.py               # Message publisher
+│   │   │   │   └── consumer.py                # Message consumer
+│   │   │   │
+│   │   │   ├── cache/                         # Cache layer
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── redis_client.py
+│   │   │   │
+│   │   │   ├── middleware/                    # Middleware
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── auth_middleware.py
+│   │   │   │   └── logging_middleware.py
 │   │   │   │
 │   │   │   ├── config/                        # Configuration
 │   │   │   │   ├── __init__.py
-│   │   │   │   ├── settings.py               # Pydantic settings
-│   │   │   │   └── logging.py
-│   │   │   │
-│   │   │   ├── schemas/                       # Pydantic schemas (DTOs)
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── user.py
-│   │   │   │   ├── auth.py
-│   │   │   │   └── response.py
+│   │   │   │   ├── settings.py                # App settings
+│   │   │   │   └── logging.py                 # Logging config
 │   │   │   │
 │   │   │   ├── utils/                         # Utilities
 │   │   │   │   ├── __init__.py
-│   │   │   │   ├── security.py               # JWT, password hashing
-│   │   │   │   ├── validators.py
-│   │   │   │   └── exceptions.py
+│   │   │   │   ├── security.py                # JWT, password hashing
+│   │   │   │   ├── validators.py              # Input validators
+│   │   │   │   └── exceptions.py              # Custom exceptions
 │   │   │   │
 │   │   │   └── main.py                        # FastAPI app entry point
 │   │   │
 │   │   ├── tests/                             # Tests
 │   │   │   ├── unit/
-│   │   │   │   ├── test_use_cases.py
-│   │   │   │   └── test_entities.py
+│   │   │   │   ├── test_controllers.py
+│   │   │   │   ├── test_services.py
+│   │   │   │   └── test_repositories.py
 │   │   │   ├── integration/
 │   │   │   │   ├── test_api.py
-│   │   │   │   └── test_repository.py
+│   │   │   │   └── test_database.py
 │   │   │   └── conftest.py
 │   │   │
 │   │   ├── migrations/                        # Alembic migrations
@@ -96,65 +101,72 @@ trip-hub/
 │   │
 │   ├── destination-service/                    # Service quản lý điểm đến
 │   │   ├── src/
-│   │   │   ├── api/
-│   │   │   │   ├── v1/
-│   │   │   │   │   ├── endpoints/
-│   │   │   │   │   │   ├── __init__.py
-│   │   │   │   │   │   ├── destinations.py   # CRUD điểm đến
-│   │   │   │   │   │   ├── attractions.py    # Địa điểm tham quan
-│   │   │   │   │   │   ├── hotels.py         # Khách sạn
-│   │   │   │   │   │   └── search.py         # Tìm kiếm
-│   │   │   │   │   └── router.py
-│   │   │   │   └── dependencies.py
+│   │   │   ├── controllers/                   # Controllers (C - MVC)
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── destination_controller.py  # CRUD điểm đến
+│   │   │   │   ├── attraction_controller.py   # Địa điểm tham quan
+│   │   │   │   ├── hotel_controller.py        # Khách sạn
+│   │   │   │   └── search_controller.py       # Tìm kiếm
 │   │   │   │
-│   │   │   ├── core/
-│   │   │   │   ├── use_cases/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── get_destination_info.py
-│   │   │   │   │   ├── search_destinations.py
-│   │   │   │   │   ├── get_attractions.py
-│   │   │   │   │   └── get_nearby_hotels.py
-│   │   │   │   ├── entities/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── destination.py
-│   │   │   │   │   ├── attraction.py
-│   │   │   │   │   └── hotel.py
-│   │   │   │   └── interfaces/
-│   │   │   │       ├── __init__.py
-│   │   │   │       ├── destination_repository.py
-│   │   │   │       └── external_api_client.py
+│   │   │   ├── models/                        # Models (M - MVC)
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── destination.py             # Destination model
+│   │   │   │   ├── attraction.py              # Attraction model
+│   │   │   │   └── hotel.py                   # Hotel model
 │   │   │   │
-│   │   │   ├── infrastructure/
-│   │   │   │   ├── database/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── connection.py
-│   │   │   │   │   ├── models.py
-│   │   │   │   │   └── repositories/
-│   │   │   │   │       ├── __init__.py
-│   │   │   │   │       ├── destination_repository_impl.py
-│   │   │   │   │       └── attraction_repository_impl.py
-│   │   │   │   ├── messaging/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── publisher.py
-│   │   │   │   │   └── consumer.py
-│   │   │   │   ├── cache/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   └── redis_client.py
-│   │   │   │   └── external/
-│   │   │   │       ├── __init__.py
-│   │   │   │       ├── google_places_client.py
-│   │   │   │       └── tripadvisor_client.py
+│   │   │   ├── views/                         # Views (V - MVC)
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── destination_view.py        # Destination response schemas
+│   │   │   │   ├── attraction_view.py         # Attraction response schemas
+│   │   │   │   └── hotel_view.py              # Hotel response schemas
+│   │   │   │
+│   │   │   ├── services/                      # Business Logic Layer
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── destination_service.py     # Destination logic
+│   │   │   │   ├── attraction_service.py      # Attraction logic
+│   │   │   │   ├── hotel_service.py           # Hotel logic
+│   │   │   │   └── search_service.py          # Search logic
+│   │   │   │
+│   │   │   ├── repositories/                  # Data Access Layer
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── destination_repository.py
+│   │   │   │   ├── attraction_repository.py
+│   │   │   │   └── hotel_repository.py
+│   │   │   │
+│   │   │   ├── routes/                        # API Routes
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── destination_routes.py
+│   │   │   │   ├── attraction_routes.py
+│   │   │   │   ├── hotel_routes.py
+│   │   │   │   └── search_routes.py
+│   │   │   │
+│   │   │   ├── database/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── connection.py
+│   │   │   │   └── base.py
+│   │   │   │
+│   │   │   ├── messaging/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── publisher.py
+│   │   │   │   └── consumer.py
+│   │   │   │
+│   │   │   ├── cache/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── redis_client.py
+│   │   │   │
+│   │   │   ├── external/                      # External API clients
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── google_places_client.py
+│   │   │   │   └── tripadvisor_client.py
+│   │   │   │
+│   │   │   ├── middleware/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── logging_middleware.py
 │   │   │   │
 │   │   │   ├── config/
 │   │   │   │   ├── __init__.py
 │   │   │   │   ├── settings.py
 │   │   │   │   └── logging.py
-│   │   │   │
-│   │   │   ├── schemas/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── destination.py
-│   │   │   │   ├── attraction.py
-│   │   │   │   └── hotel.py
 │   │   │   │
 │   │   │   ├── utils/
 │   │   │   │   ├── __init__.py
@@ -164,6 +176,9 @@ trip-hub/
 │   │   │   └── main.py
 │   │   │
 │   │   ├── tests/
+│   │   │   ├── unit/
+│   │   │   ├── integration/
+│   │   │   └── conftest.py
 │   │   ├── migrations/
 │   │   ├── Dockerfile
 │   │   ├── requirements.txt
