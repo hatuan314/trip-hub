@@ -66,7 +66,9 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
 ## 📡 API Endpoints
 
-### 1. Tìm kiếm chuyến bay
+### Flight Search (Tìm kiếm chuyến bay)
+
+#### 1. Tìm kiếm chuyến bay
 **POST** `/api/v1/flights/search`
 
 **Request Body:**
@@ -106,23 +108,87 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 }
 ```
 
-### 2. Lấy chi tiết chuyến bay
+#### 2. Lấy chi tiết chuyến bay
 **GET** `/api/v1/flights/{offer_id}`
 
-### 3. Health check
+#### 3. Health check
 **GET** `/api/v1/flights/health`
+
+### Hotel Search (Tìm kiếm khách sạn)
+
+#### 1. Tìm kiếm khách sạn theo thành phố
+**POST** `/api/v1/hotels/search`
+
+**Request Body:**
+```json
+{
+  "city_code": "BKK",
+  "check_in_date": "2025-02-01",
+  "check_out_date": "2025-02-05",
+  "adults": 2,
+  "children": 1,
+  "rooms": 1,
+  "currency": "USD"
+}
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "hotel": {
+        "hotelId": "BKXXX001",
+        "name": "Grand Hotel Bangkok",
+        "rating": "5"
+      },
+      "offers": [
+        {
+          "price": {
+            "currency": "USD",
+            "total": "150.00"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### 2. Lấy chi tiết khách sạn
+**POST** `/api/v1/hotels/offers`
+
+#### 3. Health check
+**GET** `/api/v1/hotels/health`
 
 ## 🧪 Test API
 
-### Sử dụng curl
+### Test Flight Search
 ```bash
 curl -X POST "http://localhost:8000/api/v1/flights/search" \
   -H "Content-Type: application/json" \
   -d '{
     "origin": "HAN",
     "destination": "BKK",
-    "departure_date": "2024-12-25",
-    "adults": 1
+    "departure_date": "2025-01-15",
+    "return_date": "2025-01-20",
+    "adults": 2,
+    "currency": "USD"
+  }'
+```
+
+### Test Hotel Search
+```bash
+curl -X POST "http://localhost:8000/api/v1/hotels/search" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "city_code": "BKK",
+    "check_in_date": "2025-02-01",
+    "check_out_date": "2025-02-05",
+    "adults": 2,
+    "children": 1,
+    "rooms": 1,
+    "currency": "USD"
   }'
 ```
 
@@ -165,12 +231,25 @@ booking-service/
 - **API Secret**: dCILSPjIHv40Hyfg
 - **Environment**: Test (https://test.api.amadeus.com)
 
+### Supported APIs
+1. **Flight Offers Search** - Tìm kiếm chuyến bay
+2. **Hotel Search** - Tìm kiếm khách sạn theo thành phố
+
 ### IATA Codes (Ví dụ)
+
+**Sân bay:**
 - **HAN**: Nội Bài, Hà Nội
 - **SGN**: Tân Sơn Nhất, TP.HCM
 - **BKK**: Suvarnabhumi, Bangkok
 - **SIN**: Changi, Singapore
 - **NRT**: Narita, Tokyo
+
+**Thành phố (cho hotel search):**
+- **BKK**: Bangkok, Thái Lan
+- **SIN**: Singapore
+- **PAR**: Paris, Pháp
+- **LON**: London, Anh
+- **NYC**: New York, Mỹ
 
 ## 📝 Ghi chú
 
@@ -178,17 +257,28 @@ booking-service/
 - Access token tự động refresh khi hết hạn
 - Logs được lưu trong thư mục `logs/`
 - CORS được bật cho phép test từ frontend
+- Hỗ trợ 2 tính năng chính:
+  - ✈️ **Flight Search**: Tìm kiếm chuyến bay giữa 2 địa điểm
+  - 🏨 **Hotel Search**: Tìm kiếm khách sạn theo thành phố
 
 ## 🛠️ Development
 
 ### Thêm endpoint mới
 1. Tạo schema trong `src/schemas/`
-2. Tạo use case trong `src/core/use_cases/`
-3. Tạo endpoint trong `src/api/v1/endpoints/`
-4. Register router trong `src/api/v1/router.py`
+2. Tạo entity trong `src/core/entities/`
+3. Tạo use case trong `src/core/use_cases/`
+4. Tạo endpoint trong `src/api/v1/endpoints/`
+5. Register router trong `src/api/v1/router.py`
 
 ### Best Practices
 - Luôn validate input với Pydantic schemas
 - Xử lý exceptions và log errors
 - Sử dụng dependency injection cho use cases
 - Tách biệt business logic khỏi HTTP layer
+
+## 📚 Documentation
+
+- **Flight Search Guide**: Xem `README.md` (phần này)
+- **Hotel Search Guide**: Xem `HOTEL_SEARCH_GUIDE.md`
+- **Usage Examples**: Xem `USAGE.md`
+- **API Documentation**: http://localhost:8000/api/docs

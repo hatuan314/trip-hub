@@ -7,24 +7,24 @@ class FlightSearchRequest(BaseModel):
     origin: str = Field(..., description="IATA code của sân bay xuất phát (VD: HAN, SGN)", min_length=3, max_length=3)
     destination: str = Field(..., description="IATA code của sân bay đến (VD: BKK, SIN)", min_length=3, max_length=3)
     departure_date: str = Field(..., description="Ngày khởi hành (YYYY-MM-DD)", pattern=r"^\d{4}-\d{2}-\d{2}$")
-    return_date: Optional[str] = Field(None, description="Ngày về (YYYY-MM-DD) - để trống nếu 1 chiều", pattern=r"^\d{4}-\d{2}-\d{2}$")
-    adults: int = Field(1, description="Số lượng hành khách người lớn", ge=1, le=9)
+    return_date: str = Field(..., description="Ngày về (YYYY-MM-DD)", pattern=r"^\d{4}-\d{2}-\d{2}$")
+    adults: int = Field(..., description="Số lượng hành khách người lớn", ge=1, le=9)
+    currency: str = Field(..., description="Đơn vị tiền tệ", max_length=3)
     travel_class: Optional[str] = Field(None, description="Hạng vé: ECONOMY, PREMIUM_ECONOMY, BUSINESS, FIRST")
-    non_stop: bool = Field(False, description="Chỉ tìm chuyến bay thẳng")
-    currency: str = Field("USD", description="Đơn vị tiền tệ", max_length=3)
-    max_results: int = Field(10, description="Số lượng kết quả tối đa", ge=1, le=250)
+    non_stop: Optional[bool] = Field(False, description="Chỉ tìm chuyến bay thẳng")
+    max_results: Optional[int] = Field(10, description="Số lượng kết quả tối đa", ge=1, le=250)
     
     class Config:
         json_schema_extra = {
             "example": {
                 "origin": "HAN",
                 "destination": "BKK",
-                "departure_date": "2024-12-25",
-                "return_date": "2024-12-30",
+                "departure_date": "2025-01-15",
                 "adults": 2,
+                "currency": "USD",
+                "return_date": "2025-01-20",
                 "travel_class": "ECONOMY",
                 "non_stop": False,
-                "currency": "USD",
                 "max_results": 10
             }
         }
