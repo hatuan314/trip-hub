@@ -5,8 +5,6 @@ from src.core.service_router import ServiceRouter
 service_router = ServiceRouter(
     {
         "destination": settings.destination_service_url,
-        "itinerary": settings.itinerary_service_url,
-        "booking": settings.booking_service_url,
         "weather": settings.weather_service_url,
     },
     api_prefix=settings.api_prefix,

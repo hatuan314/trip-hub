@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  booking-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: booking-service
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=Booking Service
+      - APP_VERSION=1.0.0
+      - DEBUG=True
+      - AMADEUS_API_KEY=${AMADEUS_API_KEY}
+      - AMADEUS_API_SECRET=${AMADEUS_API_SECRET}
+      - AMADEUS_BASE_URL=https://test.api.amadeus.com
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CACHE_TTL=3600
+    depends_on:
+      - redis
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - booking-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: booking-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - booking-network
+    command: redis-server --appendonly yes
+
+volumes:
+  redis-data:
+
+networks:
+  booking-network:
+    driver: bridge

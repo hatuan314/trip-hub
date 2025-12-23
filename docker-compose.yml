@@ -1,0 +1,27 @@
+services:
+  destination-service:
+    build: ./services/destination-service
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./services/destination-service/.env.example
+
+  weather-service:
+    build: ./services/weather-service
+    ports:
+      - "8004:8000"
+    env_file:
+      - ./services/weather-service/.env.example
+
+  middleware-service:
+    build: ./services/middleware-service
+    ports:
+      - "9000:8000"
+    env_file:
+      - ./services/middleware-service/.env.example
+    environment:
+      DESTINATION_SERVICE_URL: http://destination-service:8000
+      WEATHER_SERVICE_URL: http://weather-service:8000
+    depends_on:
+      - destination-service
+      - weather-service
