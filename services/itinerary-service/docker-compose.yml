@@ -1,0 +1,8 @@
+services:
+  itinerary-service:
+    build: .
+    container_name: itinerary-service
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.example
