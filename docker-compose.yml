@@ -1,20 +1,83 @@
+version: '3.8'
+
 services:
+  # Backend Services
   destination-service:
     build: ./services/destination-service
+    container_name: destination-service
     ports:
       - "8001:8000"
     env_file:
       - ./services/destination-service/.env.example
+    networks:
+      - trip-hub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
   weather-service:
     build: ./services/weather-service
+    container_name: weather-service
     ports:
       - "8004:8000"
     env_file:
       - ./services/weather-service/.env.example
+    networks:
+      - trip-hub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
+  booking-service:
+    build: ./services/booking-service
+    container_name: booking-service
+    ports:
+      - "8003:8000"
+    env_file:
+      - ./services/booking-service/.env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - trip-hub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  itinerary-service:
+    build: ./services/itinerary-service
+    container_name: itinerary-service
+    ports:
+      - "8002:8000"
+    networks:
+      - trip-hub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # API Gateway / Middleware
   middleware-service:
     build: ./services/middleware-service
+    container_name: middleware-service
     ports:
       - "9000:8000"
     env_file:
@@ -22,6 +85,50 @@ services:
     environment:
       DESTINATION_SERVICE_URL: http://destination-service:8000
       WEATHER_SERVICE_URL: http://weather-service:8000
+      BOOKING_SERVICE_URL: http://booking-service:8000
+      ITINERARY_SERVICE_URL: http://itinerary-service:8000
     depends_on:
-      - destination-service
-      - weather-service
+      destination-service:
+        condition: service_healthy
+      weather-service:
+        condition: service_healthy
+      booking-service:
+        condition: service_healthy
+      itinerary-service:
+        condition: service_healthy
+    networks:
+      - trip-hub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Supporting Services
+  redis:
+    image: redis:7-alpine
+    container_name: trip-hub-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - trip-hub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+
+networks:
+  trip-hub-network:
+    driver: bridge
+    name: trip-hub-network
+
+volumes:
+  redis-data:
+    name: trip-hub-redis-data
