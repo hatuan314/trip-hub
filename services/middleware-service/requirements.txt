@@ -3,3 +3,4 @@ uvicorn[standard]>=0.26.0
 httpx>=0.25.0
 pydantic>=2.6.0
 pydantic-settings>=2.0.0
+python-jose

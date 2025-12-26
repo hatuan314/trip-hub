@@ -1,0 +1,35 @@
+from fastapi import APIRouter, HTTPException
+from src.schemas.auth import UserRegister, UserLogin
+from src.infrastructure.user_repo import UserRepo
+from src.utils.security import create_access_token, hash_password, verify_password
+from src.utils.auth_sync_client import sync_register
+
+router = APIRouter()
+repo = UserRepo()
+
+
+@router.post("/register")
+async def register(data: UserRegister):
+    # 1️⃣ Lưu LOCAL
+    if repo.get(data.username):
+        raise HTTPException(400, "User exists (local)")
+
+    hashed = hash_password(data.password)
+    repo.create(data.username, hashed)
+
+    # 2️⃣ Đồng bộ sang 8000
+    try:
+        await sync_register(data.username, data.password)
+    except Exception as e:
+        # ⚠ Không rollback nhưng log để xử lý sau
+        print(f"[SYNC ERROR] {e}")
+
+    return {"message": "registered"}
+
+
+@router.post("/login")
+def login(data: UserLogin):
+    user = repo.get(data.username)
+    if not user or not verify_password(data.password, user["password"]):
+        raise HTTPException(401, "Invalid credentials")
+    return {"access_token": create_access_token({"sub": data.username})}
