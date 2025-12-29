@@ -1,690 +1,726 @@
 # 📁 Cấu Trúc Dự Án Trip Hub - Travel Planning Application
 
 ## 🎯 Tổng Quan
-Ứng dụng lập kế hoạch du lịch với kiến trúc microservices, sử dụng FastAPI, MVC Pattern, Docker và Message Broker.
 
-## 🧱 Cấu Trúc Thư Mục
+**Trip Hub** là hệ thống **microservices** hoàn chỉnh cho việc lập kế hoạch và quản lý chuyến du lịch, được xây dựng với **Python FastAPI**, tích hợp **PostgreSQL**, **MySQL**, **Redis**, và triển khai với **Docker Compose**.
+
+### **Kiến Trúc Thực Tế**
+
+- **5 Microservices**: Middleware (API Gateway), Destination, Weather, Booking, Itinerary
+- **Pattern**: Clean Architecture, Repository Pattern, API Gateway Pattern
+- **Communication**: HTTP/REST synchronous
+- **Authentication**: JWT tokens (centralized tại Middleware)
+- **Databases**: 
+  - **PostgreSQL**: Users, Itineraries, Activities (shared giữa Middleware & Itinerary)
+  - **MySQL**: Destinations catalog
+  - **Redis**: Cache cho Booking & Weather services
+- **External APIs**: 
+  - **Amadeus API**: Flight & Hotel search
+  - **OpenWeatherMap API**: Weather forecasting
+- **Deployment**: Docker Compose với Docker network (trip-network)
+- **Public Access**: Chỉ Middleware Service (port 9000)
+- **Documentation**: Comprehensive README.md cho từng service
+
+### **Tech Stack**
+
+- **Language**: Python 3.11+
+- **Framework**: FastAPI
+- **ORM**: SQLAlchemy 2.0
+- **Validation**: Pydantic
+- **HTTP Client**: httpx (async)
+- **Containerization**: Docker + Docker Compose
+- **Web UI**: Static HTML/CSS/JS
+
+---
+
+## 🧱 Cấu Trúc Thư Mục Thực Tế
 
 ```
 trip-hub/
-├── services/                                    # Các microservices
-│   ├── user-service/                           # Service quản lý người dùng
-│   │   ├── src/
-│   │   │   ├── controllers/                   # Controllers (C - MVC)
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── auth_controller.py         # Đăng nhập, đăng ký
-│   │   │   │   ├── user_controller.py         # CRUD người dùng
-│   │   │   │   └── profile_controller.py      # Quản lý profile
-│   │   │   │
-│   │   │   ├── models/                        # Models (M - MVC)
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── user.py                    # SQLAlchemy User model
-│   │   │   │   ├── profile.py                 # SQLAlchemy Profile model
-│   │   │   │   └── session.py                 # SQLAlchemy Session model
-│   │   │   │
-│   │   │   ├── views/                         # Views (V - MVC) - Response schemas
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── user_view.py               # User response schemas
-│   │   │   │   ├── auth_view.py               # Auth response schemas
-│   │   │   │   └── profile_view.py            # Profile response schemas
-│   │   │   │
-│   │   │   ├── services/                      # Business Logic Layer
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── auth_service.py            # Authentication logic
-│   │   │   │   ├── user_service.py            # User business logic
-│   │   │   │   └── profile_service.py         # Profile business logic
-│   │   │   │
-│   │   │   ├── repositories/                  # Data Access Layer
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── user_repository.py         # User data access
-│   │   │   │   └── profile_repository.py      # Profile data access
-│   │   │   │
-│   │   │   ├── routes/                        # API Routes
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── auth_routes.py             # Auth endpoints
-│   │   │   │   ├── user_routes.py             # User endpoints
-│   │   │   │   └── profile_routes.py          # Profile endpoints
-│   │   │   │
-│   │   │   ├── database/                      # Database configuration
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── connection.py              # DB connection
-│   │   │   │   └── base.py                    # Base model
-│   │   │   │
-│   │   │   ├── messaging/                     # Message broker
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── publisher.py               # Message publisher
-│   │   │   │   └── consumer.py                # Message consumer
-│   │   │   │
-│   │   │   ├── cache/                         # Cache layer
-│   │   │   │   ├── __init__.py
-│   │   │   │   └── redis_client.py
-│   │   │   │
-│   │   │   ├── middleware/                    # Middleware
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── auth_middleware.py
-│   │   │   │   └── logging_middleware.py
-│   │   │   │
-│   │   │   ├── config/                        # Configuration
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── settings.py                # App settings
-│   │   │   │   └── logging.py                 # Logging config
-│   │   │   │
-│   │   │   ├── utils/                         # Utilities
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── security.py                # JWT, password hashing
-│   │   │   │   ├── validators.py              # Input validators
-│   │   │   │   └── exceptions.py              # Custom exceptions
-│   │   │   │
-│   │   │   └── main.py                        # FastAPI app entry point
-│   │   │
-│   │   ├── tests/                             # Tests
-│   │   │   ├── unit/
-│   │   │   │   ├── test_controllers.py
-│   │   │   │   ├── test_services.py
-│   │   │   │   └── test_repositories.py
-│   │   │   ├── integration/
-│   │   │   │   ├── test_api.py
-│   │   │   │   └── test_database.py
-│   │   │   └── conftest.py
-│   │   │
-│   │   ├── migrations/                        # Alembic migrations
-│   │   │   ├── versions/
-│   │   │   ├── env.py
-│   │   │   └── script.py.mako
-│   │   │
-│   │   ├── Dockerfile
-│   │   ├── requirements.txt
-│   │   ├── requirements-dev.txt
-│   │   ├── .env.example
-│   │   ├── alembic.ini
-│   │   └── README.md
+├── services/                                # 5 Microservices
 │   │
-│   ├── destination-service/                    # Service quản lý điểm đến
+│   ├── middleware-service/                  # ⭐ API Gateway + Authentication
 │   │   ├── src/
-│   │   │   ├── controllers/                   # Controllers (C - MVC)
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── destination_controller.py  # CRUD điểm đến
-│   │   │   │   ├── attraction_controller.py   # Địa điểm tham quan
-│   │   │   │   ├── hotel_controller.py        # Khách sạn
-│   │   │   │   └── search_controller.py       # Tìm kiếm
+│   │   │   ├── api/v1/                      # API Layer
+│   │   │   │   ├── endpoints/
+│   │   │   │   │   ├── auth.py              # POST /register, /login
+│   │   │   │   │   ├── proxy.py             # Generic proxy /{service}/{path}
+│   │   │   │   │   └── wrappers.py          # Wrapper endpoints (convenience)
+│   │   │   │   ├── router.py                # Route aggregation
+│   │   │   │   └── dependencies.py          # get_current_user (JWT auth)
 │   │   │   │
-│   │   │   ├── models/                        # Models (M - MVC)
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── destination.py             # Destination model
-│   │   │   │   ├── attraction.py              # Attraction model
-│   │   │   │   └── hotel.py                   # Hotel model
+│   │   │   ├── core/                        # Business Logic
+│   │   │   │   ├── service_router.py        # ServiceRouter class (service discovery)
+│   │   │   │   └── bootstrap.py             # Service URLs initialization
 │   │   │   │
-│   │   │   ├── views/                         # Views (V - MVC)
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── destination_view.py        # Destination response schemas
-│   │   │   │   ├── attraction_view.py         # Attraction response schemas
-│   │   │   │   └── hotel_view.py              # Hotel response schemas
+│   │   │   ├── infrastructure/              # Data Access Layer
+│   │   │   │   ├── database/
+│   │   │   │   │   ├── connection.py        # PostgreSQL connection
+│   │   │   │   │   └── models.py            # User ORM model
+│   │   │   │   └── user_repo.py             # User repository (create, get)
 │   │   │   │
-│   │   │   ├── services/                      # Business Logic Layer
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── destination_service.py     # Destination logic
-│   │   │   │   ├── attraction_service.py      # Attraction logic
-│   │   │   │   ├── hotel_service.py           # Hotel logic
-│   │   │   │   └── search_service.py          # Search logic
-│   │   │   │
-│   │   │   ├── repositories/                  # Data Access Layer
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── destination_repository.py
-│   │   │   │   ├── attraction_repository.py
-│   │   │   │   └── hotel_repository.py
-│   │   │   │
-│   │   │   ├── routes/                        # API Routes
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── destination_routes.py
-│   │   │   │   ├── attraction_routes.py
-│   │   │   │   ├── hotel_routes.py
-│   │   │   │   └── search_routes.py
-│   │   │   │
-│   │   │   ├── database/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── connection.py
-│   │   │   │   └── base.py
-│   │   │   │
-│   │   │   ├── messaging/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── publisher.py
-│   │   │   │   └── consumer.py
-│   │   │   │
-│   │   │   ├── cache/
-│   │   │   │   ├── __init__.py
-│   │   │   │   └── redis_client.py
-│   │   │   │
-│   │   │   ├── external/                      # External API clients
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── google_places_client.py
-│   │   │   │   └── tripadvisor_client.py
-│   │   │   │
-│   │   │   ├── middleware/
-│   │   │   │   ├── __init__.py
-│   │   │   │   └── logging_middleware.py
+│   │   │   ├── schemas/
+│   │   │   │   └── auth.py                  # UserRegister, UserLogin schemas
 │   │   │   │
 │   │   │   ├── config/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── settings.py
-│   │   │   │   └── logging.py
+│   │   │   │   └── settings.py              # Service URLs, DATABASE_URL
 │   │   │   │
 │   │   │   ├── utils/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── validators.py
-│   │   │   │   └── exceptions.py
+│   │   │   │   └── security.py              # JWT creation, password handling
 │   │   │   │
-│   │   │   └── main.py
+│   │   │   └── main.py                      # FastAPI app, CORS, startup
 │   │   │
-│   │   ├── tests/
-│   │   │   ├── unit/
-│   │   │   ├── integration/
-│   │   │   └── conftest.py
-│   │   ├── migrations/
 │   │   ├── Dockerfile
-│   │   ├── requirements.txt
-│   │   ├── requirements-dev.txt
+│   │   ├── requirements.txt                 # fastapi, sqlalchemy, httpx, python-jose
 │   │   ├── .env.example
-│   │   └── README.md
+│   │   └── README.md                        # ✅ Full documentation
 │   │
-│   ├── itinerary-service/                      # Service lên lịch trình
+│   ├── destination-service/                 # 📍 Destination Catalog (MySQL)
 │   │   ├── src/
-│   │   │   ├── api/
-│   │   │   │   ├── v1/
-│   │   │   │   │   ├── endpoints/
-│   │   │   │   │   │   ├── __init__.py
-│   │   │   │   │   │   ├── itineraries.py    # CRUD lịch trình
-│   │   │   │   │   │   ├── activities.py     # Hoạt động trong lịch trình
-│   │   │   │   │   │   └── suggestions.py    # Gợi ý lịch trình
-│   │   │   │   │   └── router.py
-│   │   │   │   └── dependencies.py
+│   │   │   ├── api/v1/
+│   │   │   │   ├── endpoints/
+│   │   │   │   │   └── destinations.py      # GET /destinations, /destinations/{id}
+│   │   │   │   └── router.py
 │   │   │   │
 │   │   │   ├── core/
-│   │   │   │   ├── use_cases/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── create_itinerary.py
-│   │   │   │   │   ├── generate_schedule.py  # Tự động lên lịch
-│   │   │   │   │   ├── add_activity.py
-│   │   │   │   │   ├── optimize_route.py     # Tối ưu lộ trình
-│   │   │   │   │   └── share_itinerary.py
-│   │   │   │   ├── entities/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── itinerary.py
-│   │   │   │   │   └── activity.py
-│   │   │   │   └── interfaces/
-│   │   │   │       ├── __init__.py
-│   │   │   │       └── itinerary_repository.py
+│   │   │   │   └── use_cases/
+│   │   │   │       └── get_destinations.py  # Business logic
 │   │   │   │
 │   │   │   ├── infrastructure/
 │   │   │   │   ├── database/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── connection.py
-│   │   │   │   │   ├── models.py
-│   │   │   │   │   └── repositories/
-│   │   │   │   │       ├── __init__.py
-│   │   │   │   │       └── itinerary_repository_impl.py
-│   │   │   │   ├── messaging/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── publisher.py
-│   │   │   │   │   └── consumer.py
-│   │   │   │   ├── cache/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   └── redis_client.py
-│   │   │   │   └── external/
-│   │   │   │       ├── __init__.py
-│   │   │   │       ├── destination_service_client.py
-│   │   │   │       └── weather_service_client.py
-│   │   │   │
-│   │   │   ├── config/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── settings.py
-│   │   │   │   └── logging.py
+│   │   │   │   │   ├── connection.py        # MySQL connection
+│   │   │   │   │   └── models.py            # Destination model
+│   │   │   │   └── destination_repo.py      # Repository (list, get, search, filter)
 │   │   │   │
 │   │   │   ├── schemas/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── itinerary.py
-│   │   │   │   └── activity.py
+│   │   │   │   └── destination.py           # DestinationResponse, SearchRequest
 │   │   │   │
-│   │   │   ├── utils/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── schedule_optimizer.py     # Thuật toán tối ưu
-│   │   │   │   ├── validators.py
-│   │   │   │   └── exceptions.py
+│   │   │   ├── config/
+│   │   │   │   └── settings.py              # DATABASE_URL (MySQL)
 │   │   │   │
 │   │   │   └── main.py
 │   │   │
-│   │   ├── tests/
-│   │   ├── migrations/
 │   │   ├── Dockerfile
-│   │   ├── requirements.txt
-│   │   ├── requirements-dev.txt
+│   │   ├── requirements.txt                 # fastapi, mysql-connector-python
 │   │   ├── .env.example
-│   │   └── README.md
+│   │   └── README.md                        # ✅ Full documentation
 │   │
-│   ├── booking-service/                        # Service đặt vé, phòng
+│   ├── weather-service/                     # ☀️ Weather Forecast (OpenWeatherMap)
 │   │   ├── src/
-│   │   │   ├── api/
-│   │   │   │   ├── v1/
-│   │   │   │   │   ├── endpoints/
-│   │   │   │   │   │   ├── __init__.py
-│   │   │   │   │   │   ├── flights.py        # Tìm kiếm, đặt vé máy bay
-│   │   │   │   │   │   ├── hotels.py         # Tìm kiếm, đặt phòng
-│   │   │   │   │   │   ├── bookings.py       # Quản lý booking
-│   │   │   │   │   │   └── payments.py       # Xử lý thanh toán
-│   │   │   │   │   └── router.py
-│   │   │   │   └── dependencies.py
+│   │   │   ├── api/v1/
+│   │   │   │   ├── endpoints/
+│   │   │   │   │   └── weather.py           # GET /current/{city}, /forecast/{city}
+│   │   │   │   └── router.py
+│   │   │   │
+│   │   │   ├── core/
+│   │   │   │   └── use_cases/
+│   │   │   │       ├── get_current_weather.py
+│   │   │   │       └── get_forecast.py
+│   │   │   │
+│   │   │   ├── infrastructure/
+│   │   │   │   ├── weather_api.py           # OpenWeatherMap API client
+│   │   │   │   └── cache.py                 # Redis caching (optional)
+│   │   │   │
+│   │   │   ├── schemas/
+│   │   │   │   └── weather.py               # WeatherResponse, ForecastResponse
+│   │   │   │
+│   │   │   ├── config/
+│   │   │   │   └── settings.py              # OPENWEATHER_API_KEY, REDIS_URL
+│   │   │   │
+│   │   │   └── main.py
+│   │   │
+│   │   ├── Dockerfile
+│   │   ├── requirements.txt                 # fastapi, httpx, redis
+│   │   ├── .env.example
+│   │   └── README.md                        # ✅ Full documentation
+│   │
+│   ├── booking-service/                     # ✈️ Flight & Hotel Booking (Amadeus)
+│   │   ├── src/
+│   │   │   ├── api/v1/
+│   │   │   │   ├── endpoints/
+│   │   │   │   │   ├── flights.py           # POST /flights/search, GET /flights/{id}
+│   │   │   │   │   ├── hotels.py            # POST /hotels/search, /hotels/offers
+│   │   │   │   │   └── cities.py            # GET /cities (reference data)
+│   │   │   │   └── router.py
 │   │   │   │
 │   │   │   ├── core/
 │   │   │   │   ├── use_cases/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── search_flights.py
-│   │   │   │   │   ├── book_flight.py
-│   │   │   │   │   ├── search_hotels.py
-│   │   │   │   │   ├── book_hotel.py
-│   │   │   │   │   ├── process_payment.py
-│   │   │   │   │   └── cancel_booking.py
-│   │   │   │   ├── entities/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── booking.py
-│   │   │   │   │   ├── flight.py
-│   │   │   │   │   ├── hotel_booking.py
-│   │   │   │   │   └── payment.py
-│   │   │   │   └── interfaces/
-│   │   │   │       ├── __init__.py
-│   │   │   │       ├── booking_repository.py
-│   │   │   │       └── payment_gateway.py
+│   │   │   │   │   ├── search_flights.py    # Delegate to Amadeus client
+│   │   │   │   │   └── search_hotels.py
+│   │   │   │   └── entities/
+│   │   │   │       ├── flight.py            # FlightEntity với business methods
+│   │   │   │       └── hotel.py             # HotelEntity
 │   │   │   │
 │   │   │   ├── infrastructure/
-│   │   │   │   ├── database/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── connection.py
-│   │   │   │   │   ├── models.py
-│   │   │   │   │   └── repositories/
-│   │   │   │   │       ├── __init__.py
-│   │   │   │   │       └── booking_repository_impl.py
-│   │   │   │   ├── messaging/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── publisher.py
-│   │   │   │   │   └── consumer.py
-│   │   │   │   ├── cache/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   └── redis_client.py
 │   │   │   │   └── external/
-│   │   │   │       ├── __init__.py
-│   │   │   │       ├── flight_api_client.py  # API đặt vé máy bay
-│   │   │   │       ├── hotel_api_client.py   # API đặt phòng
-│   │   │   │       └── payment_gateway_client.py
-│   │   │   │
-│   │   │   ├── config/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── settings.py
-│   │   │   │   └── logging.py
+│   │   │   │       └── amadeus_client.py    # OAuth2, token caching, API calls
 │   │   │   │
 │   │   │   ├── schemas/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── booking.py
-│   │   │   │   ├── flight.py
-│   │   │   │   ├── hotel.py
-│   │   │   │   └── payment.py
+│   │   │   │   ├── flight.py                # FlightSearchRequest, FlightOffer
+│   │   │   │   ├── hotel.py                 # HotelSearchRequest, HotelOffer
+│   │   │   │   └── city.py                  # City reference schemas
 │   │   │   │
-│   │   │   ├── utils/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── validators.py
-│   │   │   │   └── exceptions.py
+│   │   │   ├── config/
+│   │   │   │   └── settings.py              # AMADEUS_API_KEY, AMADEUS_API_SECRET
 │   │   │   │
 │   │   │   └── main.py
 │   │   │
-│   │   ├── tests/
-│   │   ├── migrations/
 │   │   ├── Dockerfile
-│   │   ├── requirements.txt
-│   │   ├── requirements-dev.txt
+│   │   ├── requirements.txt                 # fastapi, httpx, redis
 │   │   ├── .env.example
-│   │   └── README.md
+│   │   └── README.md                        # ✅ Full documentation
 │   │
-│   └── weather-service/                        # Service thông tin thời tiết
+│   └── itinerary-service-json/              # 📅 Trip Planning (PostgreSQL)
 │       ├── src/
-│       │   ├── api/
-│       │   │   ├── v1/
-│       │   │   │   ├── endpoints/
-│       │   │   │   │   ├── __init__.py
-│       │   │   │   │   ├── weather.py        # Dự báo thời tiết
-│       │   │   │   │   └── forecast.py       # Dự báo nhiều ngày
-│       │   │   │   └── router.py
-│       │   │   └── dependencies.py
-│       │   │
-│       │   ├── core/
-│       │   │   ├── use_cases/
-│       │   │   │   ├── __init__.py
-│       │   │   │   ├── get_current_weather.py
-│       │   │   │   └── get_forecast.py
-│       │   │   ├── entities/
-│       │   │   │   ├── __init__.py
-│       │   │   │   └── weather.py
-│       │   │   └── interfaces/
-│       │   │       ├── __init__.py
-│       │   │       └── weather_repository.py
+│       │   ├── api/v1/
+│       │   │   ├── endpoints/
+│       │   │   │   ├── auth.py              # Local auth (duplicate with middleware)
+│       │   │   │   ├── itineraries.py       # POST /, GET / (create, list)
+│       │   │   │   └── activities.py        # POST /, GET /{itinerary_id}
+│       │   │   ├── router.py
+│       │   │   └── dependencies.py          # get_current_user, get_db
 │       │   │
 │       │   ├── infrastructure/
 │       │   │   ├── database/
-│       │   │   │   ├── __init__.py
-│       │   │   │   ├── connection.py
-│       │   │   │   ├── models.py
-│       │   │   │   └── repositories/
-│       │   │   │       ├── __init__.py
-│       │   │   │       └── weather_repository_impl.py
-│       │   │   ├── messaging/
-│       │   │   │   ├── __init__.py
-│       │   │   │   ├── publisher.py
-│       │   │   │   └── consumer.py
-│       │   │   ├── cache/
-│       │   │   │   ├── __init__.py
-│       │   │   │   └── redis_client.py
-│       │   │   └── external/
-│       │   │       ├── __init__.py
-│       │   │       └── openweather_client.py  # OpenWeather API
-│       │   │
-│       │   ├── config/
-│       │   │   ├── __init__.py
-│       │   │   ├── settings.py
-│       │   │   └── logging.py
+│       │   │   │   ├── connection.py        # PostgreSQL connection
+│       │   │   │   └── models.py            # User, Itinerary, Activity models
+│       │   │   ├── user_repo.py
+│       │   │   ├── itinerary_repo.py        # create(), list_by_user()
+│       │   │   └── activity_repo.py         # create(), list_by_itinerary()
 │       │   │
 │       │   ├── schemas/
-│       │   │   ├── __init__.py
-│       │   │   └── weather.py
+│       │   │   ├── auth.py                  # UserRegister, UserLogin
+│       │   │   ├── itinerary.py             # ItineraryCreate
+│       │   │   └── activity.py              # ActivityCreate
+│       │   │
+│       │   ├── config/
+│       │   │   └── settings.py              # DATABASE_URL (PostgreSQL)
 │       │   │
 │       │   ├── utils/
-│       │   │   ├── __init__.py
-│       │   │   ├── validators.py
-│       │   │   └── exceptions.py
+│       │   │   ├── security.py              # JWT, plain text password (⚠️)
+│       │   │   └── json_storage.py          # JSON file I/O (unused)
 │       │   │
-│       │   └── main.py
+│       │   └── main.py                      # FastAPI app, init_db()
 │       │
-│       ├── tests/
-│       ├── migrations/
 │       ├── Dockerfile
-│       ├── requirements.txt
-│       ├── requirements-dev.txt
+│       ├── requirements.txt                 # fastapi, sqlalchemy, psycopg2, python-jose
 │       ├── .env.example
-│       └── README.md
+│       └── README.md                        # ✅ Full documentation
 │
-├── shared/                                      # Thư viện dùng chung
-│   ├── libs/                                   # Common utilities
-│   │   ├── logging/
-│   │   │   ├── __init__.py
-│   │   │   └── logger.py                      # Centralized logging
-│   │   ├── tracing/
-│   │   │   ├── __init__.py
-│   │   │   └── tracer.py                      # Distributed tracing
-│   │   ├── monitoring/
-│   │   │   ├── __init__.py
-│   │   │   └── metrics.py                     # Prometheus metrics
-│   │   ├── auth/
-│   │   │   ├── __init__.py
-│   │   │   └── jwt_handler.py                 # JWT utilities
-│   │   └── database/
-│   │       ├── __init__.py
-│   │       └── base.py                        # Base repository
-│   │
-│   └── contracts/                              # Event schemas, message contracts
-│       ├── __init__.py
-│       ├── events/
-│       │   ├── __init__.py
-│       │   ├── user_events.py                 # User domain events
-│       │   ├── booking_events.py              # Booking domain events
-│       │   └── itinerary_events.py            # Itinerary domain events
-│       └── schemas/
-│           ├── __init__.py
-│           └── common.py                      # Common schemas
+├── web/                                     # 🌐 Static Web UI
+│   ├── index.html                           # Main page
+│   ├── styles.css                           # Styling
+│   └── app.js                               # API calls to middleware
 │
-├── api-gateway/                                 # API Gateway (Kong/Nginx)
-│   ├── kong/
-│   │   ├── kong.yml                           # Kong configuration
-│   │   └── plugins/
-│   │       ├── rate-limiting.yml
-│   │       ├── jwt-auth.yml
-│   │       └── cors.yml
-│   └── nginx/
-│       ├── nginx.conf
-│       └── conf.d/
-│           └── default.conf
+├── docs/                                    # 📚 Documentation
+│   ├── DEPLOYMENT_AND_DEMO_GUIDE.md         # ✅ Deployment & demo guide
+│   ├── RUNNING_GUIDE.md                     # Quick start guide
+│   └── tai-lieu-dac-ta.md                   # Requirements spec (Vietnamese)
 │
-├── docker/                                      # Docker artifacts
-│   ├── base.Dockerfile                         # Base image cho Python services
-│   ├── docker-compose.yml                      # Production compose
-│   ├── docker-compose.local.yml                # Local development
-│   ├── docker-compose.test.yml                 # Testing environment
-│   └── .env.example                            # Environment variables template
+├── shared/                                  # 🔧 Shared utilities (empty - planned)
 │
-├── infrastructure/                              # Infrastructure as Code
-│   ├── kubernetes/                             # K8s manifests
-│   │   ├── namespaces/
-│   │   │   ├── dev.yaml
-│   │   │   ├── staging.yaml
-│   │   │   └── production.yaml
-│   │   ├── services/
-│   │   │   ├── user-service/
-│   │   │   │   ├── deployment.yaml
-│   │   │   │   ├── service.yaml
-│   │   │   │   ├── configmap.yaml
-│   │   │   │   └── hpa.yaml                   # Horizontal Pod Autoscaler
-│   │   │   ├── destination-service/
-│   │   │   ├── itinerary-service/
-│   │   │   ├── booking-service/
-│   │   │   └── weather-service/
-│   │   ├── ingress/
-│   │   │   └── ingress.yaml
-│   │   ├── monitoring/
-│   │   │   ├── prometheus.yaml
-│   │   │   └── grafana.yaml
-│   │   └── databases/
-│   │       ├── postgres.yaml
-│   │       ├── redis.yaml
-│   │       └── rabbitmq.yaml
-│   │
-│   └── terraform/                              # Terraform IaC
-│       ├── modules/
-│       │   ├── vpc/
-│       │   ├── eks/
-│       │   └── rds/
-│       ├── environments/
-│       │   ├── dev/
-│       │   ├── staging/
-│       │   └── production/
-│       └── main.tf
+├── docker-compose.yml                       # 🐳 Docker orchestration
+│   # Services:
+│   #   - redis (cache)
+│   #   - postgres (users, itineraries)
+│   #   - destination-service (port 8001)
+│   #   - weather-service (port 8002)
+│   #   - booking-service (port 8000)
+│   #   - itinerary-service (port 8000)
+│   #   - middleware-service (port 9000 → exposed)
+│   # Network: trip-network
+│   # Volumes: redis-data, postgres-data
 │
-├── ci-cd/                                       # CI/CD pipelines
-│   ├── github-actions/
-│   │   ├── build-and-test.yml
-│   │   ├── deploy-dev.yml
-│   │   ├── deploy-staging.yml
-│   │   └── deploy-production.yml
-│   ├── gitlab-ci/
-│   │   └── .gitlab-ci.yml
-│   └── jenkins/
-│       └── Jenkinsfile
-│
-├── monitoring/                                  # Monitoring & Observability
-│   ├── prometheus/
-│   │   ├── prometheus.yml
-│   │   └── alerts/
-│   │       ├── service-alerts.yml
-│   │       └── infrastructure-alerts.yml
-│   ├── grafana/
-│   │   ├── dashboards/
-│   │   │   ├── service-metrics.json
-│   │   │   ├── business-metrics.json
-│   │   │   └── infrastructure.json
-│   │   └── provisioning/
-│   │       ├── datasources.yml
-│   │       └── dashboards.yml
-│   └── elk/                                     # ELK Stack
-│       ├── elasticsearch.yml
-│       ├── logstash/
-│       │   └── pipeline.conf
-│       └── kibana.yml
-│
-├── scripts/                                     # Utility scripts
-│   ├── setup/
-│   │   ├── init-dev-env.sh                    # Setup development environment
-│   │   └── install-dependencies.sh
-│   ├── database/
-│   │   ├── backup.sh
-│   │   ├── restore.sh
-│   │   └── migrate-all.sh
-│   ├── deployment/
-│   │   ├── deploy.sh
-│   │   └── rollback.sh
-│   └── testing/
-│       ├── run-integration-tests.sh
-│       └── run-e2e-tests.sh
-│
-├── docs/                                        # Documentation
-│   ├── architecture/
-│   │   ├── system-design.md
-│   │   ├── microservices-communication.md
-│   │   └── database-schema.md
-│   ├── api/
-│   │   ├── user-service-api.md
-│   │   ├── destination-service-api.md
-│   │   ├── itinerary-service-api.md
-│   │   ├── booking-service-api.md
-│   │   └── weather-service-api.md
-│   ├── deployment/
-│   │   ├── local-setup.md
-│   │   ├── kubernetes-deployment.md
-│   │   └── production-checklist.md
-│   └── development/
-│       ├── coding-standards.md
-│       ├── git-workflow.md
-│       └── testing-guidelines.md
-│
-├── tests/                                       # End-to-end tests
-│   ├── e2e/
-│   │   ├── test_user_journey.py
-│   │   ├── test_booking_flow.py
-│   │   └── test_itinerary_creation.py
-│   ├── integration/
-│   │   └── test_service_communication.py
-│   └── performance/
-│       └── load_tests.py
-│
-├── .github/                                     # GitHub specific
-│   ├── workflows/
-│   ├── ISSUE_TEMPLATE/
-│   └── PULL_REQUEST_TEMPLATE.md
-│
+├── README.md                                # ✅ System overview & architecture
+├── DEPLOYMENT_GUIDE.md                      # Deployment instructions
+├── MICROSERVICE_IMPROVEMENTS.md             # Future improvements
+├── PROJECT_STRUCTURE.md                     # 👈 This file
 ├── .gitignore
-├── README.md                                    # Project overview
-├── CONTRIBUTING.md
-├── LICENSE
-└── Makefile                                     # Common commands
+└── .env.example                             # Environment template
+
 ```
 
-## 📋 Mô Tả Các Microservices
+---
 
-### 1. **user-service**
-- Quản lý người dùng, authentication, authorization
-- JWT token generation và validation
-- Profile management
+## 📋 Chi Tiết Các Microservices
 
-### 2. **destination-service**
-- Quản lý thông tin điểm đến du lịch
-- Tích hợp Google Places API, TripAdvisor API
-- Thông tin về địa điểm tham quan, khách sạn
-- Search và filter destinations
+### **1. Middleware Service** (API Gateway)
 
-### 3. **itinerary-service**
-- Tạo và quản lý lịch trình du lịch
-- Tự động lên lịch dựa trên thời gian và địa điểm
-- Tối ưu hóa lộ trình di chuyển
-- Chia sẻ lịch trình với bạn bè
+**Chức năng**:
+- Single entry point cho toàn bộ hệ thống
+- JWT authentication & user management
+- Request routing tới downstream services
+- Service discovery (static config)
 
-### 4. **booking-service**
-- Tìm kiếm và đặt vé máy bay
-- Tìm kiếm và đặt phòng khách sạn
-- Xử lý thanh toán
-- Quản lý bookings
+**Endpoints**:
+- `POST /api/v1/auth/register` - User registration
+- `POST /api/v1/auth/login` - User login (returns JWT)
+- `/{service}/{path...}` - Generic proxy endpoint
+- Wrapper endpoints cho convenience
 
-### 5. **weather-service**
-- Cung cấp thông tin thời tiết hiện tại
-- Dự báo thời tiết nhiều ngày
-- Tích hợp OpenWeather API
-- Cache dữ liệu để tối ưu performance
+**Database**: PostgreSQL (users table - shared với itinerary-service)
+
+**Port**: 9000 (external), 8000 (internal)
+
+**Tech**: FastAPI, SQLAlchemy, httpx (proxy), python-jose (JWT)
+
+**[📖 Documentation](./services/middleware-service/README.md)**
+
+---
+
+### **2. Destination Service**
+
+**Chức năng**:
+- Destination catalog management
+- Search & filter destinations
+- Pagination support
+- Country, category, rating filters
+
+**Endpoints**:
+- `GET /api/v1/destinations` - List với pagination
+- `GET /api/v1/destinations/{id}` - Get details
+- `POST /api/v1/destinations/search` - Search destinations
+
+**Database**: MySQL (destinations table)
+
+**Port**: 8001 (internal only)
+
+**Tech**: FastAPI, MySQL Connector Python
+
+**[📖 Documentation](./services/destination-service/README.md)**
+
+---
+
+### **3. Weather Service**
+
+**Chức năng**:
+- Current weather data
+- 5-day weather forecast
+- Weather conditions, temperature, humidity, wind
+- Response transformation
+
+**Endpoints**:
+- `GET /api/v1/weather/current/{city}` - Current weather
+- `GET /api/v1/weather/forecast/{city}` - 5-day forecast
+
+**External API**: OpenWeatherMap API
+
+**Cache**: Redis (optional)
+
+**Port**: 8002 (internal only)
+
+**Tech**: FastAPI, httpx, Redis
+
+**[📖 Documentation](./services/weather-service/README.md)**
+
+---
+
+### **4. Booking Service**
+
+**Chức năng**:
+- Flight search (Amadeus API)
+- Hotel search (2-step: get hotel IDs → get offers)
+- City/airport reference data
+- OAuth2 token management với caching
+
+**Endpoints**:
+- `POST /api/v1/flights/search` - Search flights
+- `GET /api/v1/flights/{offer_id}` - Get flight details
+- `POST /api/v1/hotels/search` - Search hotels by city
+- `POST /api/v1/hotels/offers` - Get hotel offers
+- `GET /api/v1/cities` - List cities (50+ cities)
+
+**External API**: Amadeus Test API
+
+**Cache**: Redis (token caching)
+
+**Port**: 8000 (internal only)
+
+**Tech**: FastAPI, httpx, Redis
+
+**[📖 Documentation](./services/booking-service/README.md)**
+
+---
+
+### **5. Itinerary Service**
+
+**Chức năng**:
+- Travel itinerary CRUD
+- Activity management
+- User data isolation
+- Date/time scheduling
+
+**Endpoints**:
+- `POST /api/v1/auth/register` - Register (local)
+- `POST /api/v1/auth/login` - Login (local)
+- `POST /api/v1/itineraries` - Create itinerary
+- `GET /api/v1/itineraries` - List user's itineraries
+- `POST /api/v1/activities` - Add activity
+- `GET /api/v1/activities/{itinerary_id}` - List activities
+
+**Database**: PostgreSQL (itineraries, activities tables - shared users table)
+
+**Port**: 8000 (internal only)
+
+**Tech**: FastAPI, SQLAlchemy, psycopg2, python-jose
+
+**Security Warning**: ⚠️ Passwords stored in plain text (development only)
+
+**[📖 Documentation](./services/itinerary-service-json/README.md)**
+
+---
 
 ## 🔧 Technology Stack
 
-### Backend
+### **Backend**
 - **Framework**: FastAPI
 - **Language**: Python 3.11+
-- **Architecture**: Clean Architecture
-- **ORM**: SQLAlchemy
-- **Migration**: Alembic
+- **Architecture**: Clean Architecture, Repository Pattern
+- **ORM**: SQLAlchemy 2.0
 - **Validation**: Pydantic
+- **HTTP Client**: httpx (async)
+- **Authentication**: JWT (python-jose)
 
-### Database
-- **Primary DB**: PostgreSQL
-- **Cache**: Redis
-- **Message Broker**: RabbitMQ / Apache Kafka
+### **Databases**
+- **PostgreSQL 15**: Users, Itineraries, Activities
+- **MySQL**: Destinations catalog
+- **Redis 7**: Cache cho Booking & Weather
 
-### Infrastructure
+### **Infrastructure**
 - **Containerization**: Docker
-- **Orchestration**: Kubernetes
-- **API Gateway**: Kong / Nginx
-- **Service Mesh**: Istio (optional)
+- **Orchestration**: Docker Compose
+- **Network**: Docker bridge network (trip-network)
+- **Service Discovery**: Static configuration (environment variables)
 
-### Monitoring & Logging
-- **Metrics**: Prometheus + Grafana
-- **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
-- **Tracing**: Jaeger / OpenTelemetry
-- **APM**: New Relic / DataDog (optional)
+### **External APIs**
+- **Amadeus Test API**: Flight & Hotel search
+- **OpenWeatherMap API**: Weather forecasting
 
-### CI/CD
-- **Version Control**: Git
-- **CI/CD**: GitHub Actions / GitLab CI
-- **IaC**: Terraform
-- **Container Registry**: Docker Hub / AWS ECR
+### **Frontend**
+- **Web UI**: Static HTML/CSS/JavaScript
+- **Server**: Python http.server (development)
 
-## 🚀 Quick Start
+---
 
-```bash
-# Clone repository
-git clone <repository-url>
-cd trip-hub
+## 🚀 Deployment Architecture
 
-# Setup local environment
-make setup
-
-# Start all services
-make up
-
-# Run tests
-make test
-
-# View logs
-make logs
+```
+┌──────────────────────────────────────────────────────────┐
+│                    Docker Network                         │
+│                    (trip-network)                         │
+│                                                           │
+│  ┌────────────────────────────────────────┐             │
+│  │     Middleware Service (9000)          │             │
+│  │     ← Only Exposed Service            │             │
+│  └──┬────┬────┬────┬────┬────────────────┘             │
+│     │    │    │    │    │                               │
+│     ↓    ↓    ↓    ↓    ↓                               │
+│  ┌────┐┌────┐┌────┐┌────┐┌────┐                       │
+│  │Dest││Wea ││Book││Itin││DB  │                       │
+│  │8001││8002││8000││8000││    │                       │
+│  └────┘└────┘└────┘└────┘│    │                       │
+│                           │Post│                       │
+│                           │gres│                       │
+│                           │SQL │                       │
+│                           │5432│                       │
+│                           └────┘                       │
+│                           ┌────┐                       │
+│                           │MySQL                      │
+│                           │3306│                       │
+│                           └────┘                       │
+│                           ┌────┐                       │
+│                           │Redis                      │
+│                           │6379│                       │
+│                           └────┘                       │
+└───────────────────────────────────────────────────────────┘
+          ↑
+          │ HTTP Requests
+          │
+    ┌─────────────┐
+    │   Client    │
+    │ (Web/cURL)  │
+    └─────────────┘
 ```
 
-## 📝 Development Workflow
+### **Network Isolation**
+- **External**: Chỉ Middleware Service expose port 9000
+- **Internal**: Tất cả services giao tiếp trong Docker network
+- **Service Discovery**: Docker DNS (service names → IP)
 
-1. Mỗi service có thể phát triển độc lập
-2. Sử dụng Docker Compose cho local development
-3. API Gateway làm entry point cho tất cả requests
-4. Services giao tiếp qua REST API và Message Broker
-5. Shared libraries để tránh code duplication
+### **Data Flow**
+1. Client → Middleware (JWT auth)
+2. Middleware validates JWT
+3. Middleware proxy request → Downstream service
+4. Downstream service process request
+5. Response → Middleware → Client
 
-## 🔐 Security
+---
 
-- JWT authentication
+## 📝 Environment Variables
+
+Mỗi service cần file `.env` với cấu hình riêng:
+
+### **Middleware Service**
+```bash
+DATABASE_URL=postgresql+psycopg2://trip:trip@postgres:5432/trip_hub
+DESTINATION_SERVICE_URL=http://destination-service:8001
+WEATHER_SERVICE_URL=http://weather-service:8002
+ITINERARY_SERVICE_URL=http://itinerary-service:8000
+BOOKING_SERVICE_URL=http://booking-service:8000
+```
+
+### **Booking Service**
+```bash
+AMADEUS_API_KEY=your-key-here
+AMADEUS_API_SECRET=your-secret-here
+AMADEUS_BASE_URL=https://test.api.amadeus.com
+REDIS_HOST=redis
+REDIS_PORT=6379
+```
+
+### **Weather Service**
+```bash
+OPENWEATHER_API_KEY=your-key-here
+REDIS_URL=redis://redis:6379/0
+```
+
+### **Destination Service**
+```bash
+DATABASE_URL=mysql://root:root@mysql:3306/destinations
+```
+
+### **Itinerary Service**
+```bash
+DATABASE_URL=postgresql+psycopg2://trip:trip@postgres:5432/trip_hub
+```
+
+---
+
+## 🚦 Quick Start
+
+### **1. Clone Repository**
+```bash
+git clone <repository-url>
+cd trip-hub
+```
+
+### **2. Configure Environment**
+```bash
+# Copy env files
+cp services/middleware-service/.env.example services/middleware-service/.env
+cp services/booking-service/.env.example services/booking-service/.env
+cp services/weather-service/.env.example services/weather-service/.env
+
+# Edit .env files với actual API keys
+```
+
+### **3. Start Services**
+```bash
+# Build và start tất cả services
+docker compose up -d --build
+
+# Check status
+docker compose ps
+
+# View logs
+docker compose logs -f middleware-service
+```
+
+### **4. Verify Health**
+```bash
+# Check API Gateway
+curl http://localhost:9000/health
+
+# Expected: {"status": "ok", "service": "middleware-service", ...}
+```
+
+### **5. Test API**
+```bash
+# Register user
+curl -X POST http://localhost:9000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","password":"test123"}'
+
+# Login
+TOKEN=$(curl -X POST http://localhost:9000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","password":"test123"}' \
+  | jq -r '.access_token')
+
+# List destinations
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:9000/api/v1/destination/destinations
+```
+
+### **6. Access Web UI**
+```bash
+cd web
+python -m http.server 8080
+# Open: http://localhost:8080
+# Set API URL: http://localhost:9000
+```
+
+---
+
+## 📊 Service Dependencies
+
+```
+middleware-service
+├── Depends on: postgres
+└── Routes to:
+    ├── destination-service
+    ├── weather-service
+    ├── booking-service
+    └── itinerary-service
+
+destination-service
+└── Depends on: mysql (not in docker-compose)
+
+weather-service
+└── Depends on: redis, OpenWeatherMap API
+
+booking-service
+└── Depends on: redis, Amadeus API
+
+itinerary-service
+└── Depends on: postgres (shared)
+```
+
+---
+
+## 🔐 Security Notes
+
+### **Current Implementation (Development)**
+- ⚠️ **Plain text passwords** trong itinerary-service
+- ⚠️ **Hardcoded JWT secret** ("SECRET")
+- ✅ JWT authentication qua middleware
+- ✅ User data isolation
+- ✅ CORS enabled
+
+### **Production Requirements**
+- Implement bcrypt/argon2 password hashing
+- Use environment variables cho JWT secret
+- Add HTTPS/TLS
+- Implement rate limiting
+- Add API key rotation
+- Secrets management (Vault, AWS Secrets Manager)
+
+---
+
+## 📚 Documentation
+
+### **Service-Level Documentation**
+- [Middleware Service README](./services/middleware-service/README.md) - ✅ 1017 lines
+- [Destination Service README](./services/destination-service/README.md) - ✅ 611 lines
+- [Weather Service README](./services/weather-service/README.md) - ✅ 659 lines
+- [Booking Service README](./services/booking-service/README.md) - ✅ 1392 lines
+- [Itinerary Service README](./services/itinerary-service-json/README.md) - ✅ 1292 lines
+
+### **System-Level Documentation**
+- [System README](./README.md) - ✅ System overview & architecture
+- [Deployment & Demo Guide](./docs/DEPLOYMENT_AND_DEMO_GUIDE.md) - ✅ Complete guide
+- [Deployment Guide](./DEPLOYMENT_GUIDE.md) - Production deployment
+- [Microservice Improvements](./MICROSERVICE_IMPROVEMENTS.md) - Future enhancements
+- [Project Structure](./PROJECT_STRUCTURE.md) - 👈 This document
+
+---
+
+## 🎯 Development Workflow
+
+1. **Service Development**: Mỗi service có thể develop độc lập
+2. **Local Testing**: Use Docker Compose cho integration testing
+3. **API Gateway**: Tất cả requests qua Middleware (port 9000)
+4. **Service Communication**: HTTP/REST qua Docker network
+5. **Database**: Service-specific databases (PostgreSQL, MySQL)
+6. **Caching**: Redis cho external API responses
+
+---
+
+## 📈 Scalability Considerations
+
+### **Current Architecture**
+- **Stateless Services**: Dễ scale horizontally
+- **Database Per Service**: Independent scaling
+- **Shared Database**: Users table shared (trade-off)
+- **No Load Balancer**: Single middleware instance
+
+### **Future Improvements**
+- Kubernetes deployment với HPA
+- Database replication & sharding
+- Redis cluster cho high availability
+- Message queue cho async communication
+- Service mesh (Istio) cho advanced routing
 - API rate limiting
-- CORS configuration
-- Input validation
-- SQL injection prevention
-- Secrets management (Vault/AWS Secrets Manager)
+- Centralized logging (ELK)
+- Distributed tracing (Jaeger)
 
-## 📊 Scalability
+---
 
-- Horizontal scaling với Kubernetes HPA
-- Database replication và sharding
-- Redis caching layer
-- CDN cho static assets
-- Load balancing với API Gateway
+## 🧪 Testing
+
+### **Planned** (Not Implemented)
+- Unit tests cho mỗi service
+- Integration tests
+- E2E tests với Docker Compose
+- Load testing (Locust/k6)
+- Contract testing giữa services
+
+---
+
+## 📦 Dependencies Summary
+
+### **Common Dependencies**
+```
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+```
+
+### **Service-Specific**
+- **Middleware**: sqlalchemy, httpx, python-jose
+- **Destination**: mysql-connector-python
+- **Weather**: httpx, redis (optional)
+- **Booking**: httpx, redis
+- **Itinerary**: sqlalchemy, psycopg2-binary, python-jose
+
+---
+
+## 🔄 Git Workflow
+
+```
+.gitignore              # Python, Docker, IDE files
+├── __pycache__/
+├── *.pyc
+├── .env
+├── .venv/
+├── logs/
+└── docker volumes
+```
+
+---
+
+## 🏗️ Project Status
+
+**Status**: ✅ **Development Complete**
+
+**Completed**:
+- ✅ 5 microservices implemented
+- ✅ API Gateway pattern
+- ✅ JWT authentication
+- ✅ Docker Compose deployment
+- ✅ Comprehensive documentation
+- ✅ Web UI demo
+- ✅ External API integration (Amadeus, OpenWeatherMap)
+
+**Production Readiness**: ⚠️ **Security improvements needed**
+- Plain text passwords → bcrypt/argon2
+- Hardcoded secrets → environment variables
+- Add HTTPS/TLS
+- Add rate limiting
+- Add monitoring & logging
+
+---
+
+**Last Updated**: December 2024  
+**Maintainer**: Trip Hub Development Team

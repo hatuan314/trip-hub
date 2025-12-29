@@ -1,0 +1,45 @@
+Middleware Service
+
+1. Phân tích yêu cầu (bám theo code hiện có)
+- API gateway cho toàn hệ thống, entry point tại `http://localhost:9000`.
+- Xác thực JWT cho toàn bộ proxy endpoints (dependency `get_current_user`).
+- Cung cấp đăng ký/đăng nhập người dùng (lưu local DB, trả JWT khi login).
+- Proxy tất cả method tới downstream theo mẫu `/api/v1/{service}/{path...}`.
+- Wrapper routes tiện dụng (destination/weather/booking/itinerary) map về proxy chung.
+- Health check hiển thị danh sách service đang cấu hình.
+
+2. Thiết kế phần mềm (bám theo code hiện có)
+- FastAPI + CORS middleware; startup gọi `init_db()` để mở kết nối DB cho user.
+- `ServiceRouter` giữ map service → base URL từ `settings` và build URL đích.
+- `proxy_request()` dùng `httpx` forward request, giữ body/query/headers, xử lý timeout (504) và lỗi upstream (502), rewrite `Location` header nếu cần.
+- Auth dùng JWT HMAC; password đang lưu plain text theo `utils/security.py`.
+
+3. API chính (theo router hiện có)
+- `GET /health`
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- Proxy tổng quát: `/{service}` và `/{service}/{path...}` (prefix `/api/v1`)
+- Wrapper ví dụ: `GET /api/v1/destination/destinations`, `GET /api/v1/weather/current`, ...
+
+4. Hướng dẫn chạy demo
+- Khởi động toàn bộ hệ thống:
+  ```bash
+  docker compose up -d --build
+  ```
+- Kiểm tra health:
+  ```bash
+  curl http://localhost:9000/health
+  ```
+- Ví dụ proxy:
+  ```bash
+  curl "http://localhost:9000/api/v1/destination/destinations?query=paris"
+  curl "http://localhost:9000/api/v1/weather/current?location=Paris"
+  ```
+
+5. Giải thích hoạt động theo code
+- `main.py` bật CORS, khởi tạo DB `init_db()` lúc startup, và expose `/health` trả về danh sách service đang cấu hình qua `service_router.available_services()`. `services/middleware-service/src/main.py`.
+- `ServiceRouter` giữ map service → base URL từ `settings`, build URL đích theo `/{api_prefix}/{path...}` (trừ `/health`), và cung cấp danh sách service hợp lệ. `services/middleware-service/src/core/service_router.py`, `services/middleware-service/src/core/bootstrap.py`.
+- Bảo vệ JWT: `get_current_user` dùng `HTTPBearer`, decode JWT bằng `SECRET_KEY`, sai token trả 401. `services/middleware-service/src/api/v1/dependencies.py`.
+- Auth: `/auth/register` lưu user local qua `UserRepo`, sync sang service khác (nếu lỗi chỉ log), `/auth/login` verify password và tạo JWT bằng `create_access_token()`. `services/middleware-service/src/api/v1/endpoints/auth.py`, `services/middleware-service/src/utils/security.py`.
+- Proxy tổng quát: các endpoint trong `proxy.py` nhận mọi method/đường dẫn, gọi `proxy_request()` để forward bằng `httpx.AsyncClient`; timeout trả 504, lỗi upstream trả 502; rewrite `Location` header nếu cần. `services/middleware-service/src/api/v1/endpoints/proxy.py`.
+- Proxy “wrapper”: các endpoint thân thiện như `/destination/destinations`, `/weather/current` chỉ gọi lại `proxy_request()` với `service` và `path` cụ thể. `services/middleware-service/src/api/v1/endpoints/wrappers.py`.
