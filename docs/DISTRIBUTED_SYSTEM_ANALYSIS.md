@@ -1,10 +1,5 @@
 # Phân Tích Hệ Thống Phân Tán Microservice Trip Hub
 
-**Tác giả**: Trip Hub Development Team  
-**Ngày**: December 2024  
-**Phiên bản**: 1.0
-
----
 
 ## 📋 Mục Lục
 
