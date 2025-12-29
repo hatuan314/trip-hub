@@ -3,3 +3,5 @@ uvicorn
 pydantic
 pydantic-settings
 python-jose
+SQLAlchemy
+psycopg2-binary

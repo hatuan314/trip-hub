@@ -12,6 +12,7 @@ router = APIRouter()
 
 @router.get("/", summary="Search destinations", response_model=list[DestinationOut])
 async def list_destinations(query: str = Query(..., description="Từ khóa địa điểm"), country: str | None = None):
+    # Require API key before calling external Geoapify APIs.
     if not settings.geoapify_api_key:
         raise HTTPException(status_code=500, detail="Missing GEOAPIFY_API_KEY")
     client = GeoapifyClient(api_key=settings.geoapify_api_key)
@@ -22,6 +23,7 @@ async def list_destinations(query: str = Query(..., description="Từ khóa đ�
 
 @router.get("/{destination_query}", summary="Get destination detail", response_model=DestinationOut | None)
 async def get_destination(destination_query: str):
+    # Resolve a single destination by taking the first match from Geoapify.
     if not settings.geoapify_api_key:
         raise HTTPException(status_code=500, detail="Missing GEOAPIFY_API_KEY")
     client = GeoapifyClient(api_key=settings.geoapify_api_key)

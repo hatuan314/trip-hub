@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trip Hub Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Work+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="glow glow-left"></div>
+    <div class="glow glow-right"></div>
+
+    <header class="hero">
+      <div class="brand">
+        <div class="logo">TH</div>
+        <div>
+          <p class="eyebrow">Trip Hub</p>
+          <h1>Service Console</h1>
+        </div>
+      </div>
+      <p class="subtitle">
+        A lightweight cockpit for middleware auth, service checks, and quick API
+        probes.
+      </p>
+      <div class="pill-row">
+        <div class="pill">Middleware: <span id="base-url-label">http://localhost:9000</span></div>
+        <div class="pill">Auth: JWT Bearer</div>
+        <div class="pill">Mode: Local</div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <h2>Connection</h2>
+        <label class="field">
+          <span>Base URL</span>
+          <input id="base-url" type="text" value="http://localhost:9000" />
+        </label>
+        <div class="button-row">
+          <button class="ghost" id="save-base">Save</button>
+          <button class="ghost" id="open-swagger">Open Swagger</button>
+          <button class="ghost" id="ping-health">Ping /health</button>
+        </div>
+        <pre id="health-output" class="output muted">No request yet.</pre>
+      </section>
+
+      <section class="card">
+        <h2>Auth</h2>
+        <div class="stack">
+          <label class="field">
+            <span>Username</span>
+            <input id="auth-user" type="text" placeholder="admin" />
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input id="auth-pass" type="password" placeholder="••••••" />
+          </label>
+        </div>
+        <div class="button-row">
+          <button id="register">Register</button>
+          <button id="login">Login</button>
+          <button class="ghost" id="clear-token">Clear Token</button>
+        </div>
+        <label class="field">
+          <span>Bearer Token</span>
+          <textarea id="token" rows="3" placeholder="Token will appear here"></textarea>
+        </label>
+        <p class="hint">Authorize is applied automatically for requests below.</p>
+      </section>
+
+      <section class="card">
+        <h2>Quick Checks</h2>
+        <div class="stack">
+          <label class="field">
+            <span>Destination Query</span>
+            <input id="dest-query" type="text" value="Hanoi" />
+          </label>
+          <label class="field">
+            <span>Destination Detail Query</span>
+            <input id="dest-detail-query" type="text" value="Hanoi Old Quarter" />
+          </label>
+          <label class="field">
+            <span>Attractions/Hotels Location</span>
+            <input id="dest-poi-location" type="text" value="Hanoi" />
+          </label>
+          <div class="grid-two">
+            <label class="field">
+              <span>Radius (m)</span>
+              <input id="dest-radius" type="number" min="100" value="5000" />
+            </label>
+            <label class="field">
+              <span>Limit</span>
+              <input id="dest-limit" type="number" min="1" max="50" value="20" />
+            </label>
+          </div>
+          <label class="field">
+            <span>Weather Location</span>
+            <input id="weather-location" type="text" value="Paris" />
+          </label>
+        </div>
+        <div class="button-row">
+          <button id="destinations">Destinations</button>
+          <button id="destination-detail">Destination Detail</button>
+        </div>
+        <div class="button-row">
+          <button id="dest-attractions">Attractions</button>
+          <button id="dest-hotels">Hotels</button>
+        </div>
+        <div class="button-row">
+          <button id="weather-current">Weather Current</button>
+          <button id="weather-forecast">Weather Forecast</button>
+        </div>
+        <p class="hint">Login trước để lấy JWT. Destinations dùng Destination Query. Destination Detail dùng Destination Detail Query. Attractions/Hotels dùng Location + Radius + Limit. Weather dùng Weather Location.</p>
+        <pre id="quick-output" class="output muted">No request yet.</pre>
+      </section>
+
+      <section class="card">
+        <h2>Itinerary Service</h2>
+        <p class="hint">Itineraries</p>
+        <div class="stack">
+          <label class="field">
+            <span>Title</span>
+            <input id="itinerary-title" type="text" placeholder="Summer escape" />
+          </label>
+          <div class="grid-two">
+            <label class="field">
+              <span>Start Date</span>
+              <input id="itinerary-start" type="date" />
+            </label>
+            <label class="field">
+              <span>End Date</span>
+              <input id="itinerary-end" type="date" />
+            </label>
+          </div>
+          <label class="field">
+            <span>Description</span>
+            <textarea id="itinerary-desc" rows="3" placeholder="Short note about the trip"></textarea>
+          </label>
+        </div>
+        <div class="button-row">
+          <button id="itinerary-create">Create Itinerary</button>
+          <button id="itinerary-list" class="ghost">List Itineraries</button>
+        </div>
+        <p class="hint">Activities</p>
+        <div class="stack">
+          <label class="field">
+            <span>Itinerary</span>
+            <select id="activity-itinerary">
+              <option value="">Select itinerary</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Title</span>
+            <input id="activity-title" type="text" placeholder="City tour" />
+          </label>
+          <div class="grid-two">
+            <label class="field">
+              <span>Start Time</span>
+              <input id="activity-start" type="datetime-local" />
+            </label>
+            <label class="field">
+              <span>End Time</span>
+              <input id="activity-end" type="datetime-local" />
+            </label>
+          </div>
+          <label class="field">
+            <span>Location</span>
+            <input id="activity-location" type="text" placeholder="Hanoi Old Quarter" />
+          </label>
+          <label class="field">
+            <span>Note (optional)</span>
+            <textarea id="activity-note" rows="2" placeholder="Anything to remember"></textarea>
+          </label>
+        </div>
+        <div class="button-row">
+          <button id="activity-create">Create Activity</button>
+          <button id="activities-list" class="ghost">List Activities</button>
+        </div>
+        <p class="hint" id="itinerary-refresh">Itineraries refresh after create/list.</p>
+        <pre id="itinerary-output" class="output muted">No request yet.</pre>
+      </section>
+
+      <section class="card wide">
+        <h2>Booking Service</h2>
+        <p class="hint">Cities</p>
+        <div class="grid-two">
+          <label class="field">
+            <span>Keyword</span>
+            <input id="cities-keyword" type="text" placeholder="Hanoi" />
+          </label>
+          <label class="field">
+            <span>Country Code</span>
+            <input id="cities-country" type="text" placeholder="VN" />
+          </label>
+        </div>
+        <label class="field">
+          <span>Limit</span>
+          <input id="cities-limit" type="number" min="1" max="100" value="10" />
+        </label>
+        <div class="button-row">
+          <button id="cities-search">Search Cities</button>
+        </div>
+
+        <p class="hint">Flights</p>
+        <div class="grid-two">
+          <label class="field">
+            <span>Origin (IATA)</span>
+            <input id="flight-origin" type="text" value="HAN" />
+          </label>
+          <label class="field">
+            <span>Destination (IATA)</span>
+            <input id="flight-destination" type="text" value="BKK" />
+          </label>
+        </div>
+        <div class="grid-two">
+          <label class="field">
+            <span>Departure Date</span>
+            <input id="flight-departure" type="date" />
+          </label>
+          <label class="field">
+            <span>Return Date</span>
+            <input id="flight-return" type="date" />
+          </label>
+        </div>
+        <div class="grid-two">
+          <label class="field">
+            <span>Adults</span>
+            <input id="flight-adults" type="number" min="1" max="9" value="1" />
+          </label>
+          <label class="field">
+            <span>Currency</span>
+            <input id="flight-currency" type="text" value="USD" />
+          </label>
+        </div>
+        <div class="grid-two">
+          <label class="field">
+            <span>Travel Class</span>
+            <select id="flight-class">
+              <option value="">Default</option>
+              <option value="ECONOMY">Economy</option>
+              <option value="PREMIUM_ECONOMY">Premium Economy</option>
+              <option value="BUSINESS">Business</option>
+              <option value="FIRST">First</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Non-stop only</span>
+            <select id="flight-nonstop">
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+          </label>
+        </div>
+        <label class="field">
+          <span>Max Results</span>
+          <input id="flight-max" type="number" min="1" max="250" value="10" />
+        </label>
+        <label class="field">
+          <span>Offer ID (for details)</span>
+          <input id="flight-offer-id" type="text" placeholder="offer-id" />
+        </label>
+        <div class="button-row">
+          <button id="flight-search">Search Flights</button>
+          <button id="flight-offer" class="ghost">Get Flight Offer</button>
+        </div>
+
+        <p class="hint">Hotels</p>
+        <div class="grid-two">
+          <label class="field">
+            <span>City Code</span>
+            <input id="hotel-city" type="text" value="BKK" />
+          </label>
+          <label class="field">
+            <span>Currency</span>
+            <input id="hotel-currency" type="text" value="USD" />
+          </label>
+        </div>
+        <div class="grid-two">
+          <label class="field">
+            <span>Check-in</span>
+            <input id="hotel-checkin" type="date" />
+          </label>
+          <label class="field">
+            <span>Check-out</span>
+            <input id="hotel-checkout" type="date" />
+          </label>
+        </div>
+        <div class="grid-two">
+          <label class="field">
+            <span>Adults</span>
+            <input id="hotel-adults" type="number" min="1" max="9" value="1" />
+          </label>
+          <label class="field">
+            <span>Children</span>
+            <input id="hotel-children" type="number" min="0" max="9" value="0" />
+          </label>
+        </div>
+        <div class="grid-two">
+          <label class="field">
+            <span>Rooms</span>
+            <input id="hotel-rooms" type="number" min="1" max="9" value="1" />
+          </label>
+          <label class="field">
+            <span>Radius (km)</span>
+            <input id="hotel-radius" type="number" min="1" max="300" value="5" />
+          </label>
+        </div>
+        <div class="grid-two">
+          <label class="field">
+            <span>Board Type</span>
+            <input id="hotel-board" type="text" placeholder="ROOM_ONLY" />
+          </label>
+          <label class="field">
+            <span>Payment Policy</span>
+            <input id="hotel-payment" type="text" placeholder="GUARANTEE" />
+          </label>
+        </div>
+        <label class="field">
+          <span>Max Results</span>
+          <input id="hotel-max" type="number" min="1" max="100" value="10" />
+        </label>
+        <label class="field">
+          <span>Hotel ID (for offers)</span>
+          <input id="hotel-id" type="text" placeholder="hotel-id" />
+        </label>
+        <div class="grid-two">
+          <label class="field">
+            <span>Offer Check-in</span>
+            <input id="hotel-offer-checkin" type="date" />
+          </label>
+          <label class="field">
+            <span>Offer Check-out</span>
+            <input id="hotel-offer-checkout" type="date" />
+          </label>
+        </div>
+        <div class="grid-two">
+          <label class="field">
+            <span>Offer Adults</span>
+            <input id="hotel-offer-adults" type="number" min="1" max="9" value="1" />
+          </label>
+          <label class="field">
+            <span>Offer Rooms</span>
+            <input id="hotel-offer-rooms" type="number" min="1" max="9" value="1" />
+          </label>
+        </div>
+        <label class="field">
+          <span>Offer Currency</span>
+          <input id="hotel-offer-currency" type="text" value="USD" />
+        </label>
+        <div class="button-row">
+          <button id="hotel-search">Search Hotels</button>
+          <button id="hotel-offers" class="ghost">Get Hotel Offers</button>
+        </div>
+        <pre id="booking-output" class="output muted">No request yet.</pre>
+      </section>
+
+      <section class="card wide">
+        <h2>Request Lab</h2>
+        <div class="grid-two">
+          <label class="field">
+            <span>Method</span>
+            <select id="lab-method">
+              <option>GET</option>
+              <option>POST</option>
+              <option>PUT</option>
+              <option>PATCH</option>
+              <option>DELETE</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Path</span>
+            <input id="lab-path" type="text" value="/api/v1/destination/destinations?query=Hanoi" />
+          </label>
+        </div>
+        <label class="field">
+          <span>JSON Body (optional)</span>
+          <textarea id="lab-body" rows="6" placeholder='{"example": "value"}'></textarea>
+        </label>
+        <div class="button-row">
+          <button id="send-lab">Send Request</button>
+          <button class="ghost" id="clear-lab">Clear</button>
+        </div>
+        <pre id="lab-output" class="output">Ready.</pre>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        Tip: Serve this folder with a local HTTP server to avoid browser CORS
+        blocks. Example: <code>python -m http.server</code>
+      </p>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

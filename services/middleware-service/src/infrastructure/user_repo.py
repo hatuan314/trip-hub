@@ -1,28 +1,20 @@
-import json
-import os
-
-USER_FILE = "data/users.json"
-
-
 class UserRepo:
-    def __init__(self):
-        os.makedirs("data", exist_ok=True)
-        if not os.path.exists(USER_FILE):
-            with open(USER_FILE, "w") as f:
-                json.dump({}, f)
-
-    def _read(self):
-        with open(USER_FILE, "r") as f:
-            return json.load(f)
-
-    def _write(self, data):
-        with open(USER_FILE, "w") as f:
-            json.dump(data, f, indent=2)
+    def __init__(self, session):
+        self.session = session
 
     def create(self, username, password):
-        users = self._read()
-        users[username] = {"username": username, "password": password}
-        self._write(users)
+        from src.infrastructure.database.models import User
+
+        user = User(username=username, password=password)
+        self.session.add(user)
+        self.session.commit()
+        self.session.refresh(user)
+        return {"username": user.username, "password": user.password}
 
     def get(self, username):
-        return self._read().get(username)
+        from src.infrastructure.database.models import User
+
+        user = self.session.query(User).filter(User.username == username).first()
+        if not user:
+            return None
+        return {"username": user.username, "password": user.password}

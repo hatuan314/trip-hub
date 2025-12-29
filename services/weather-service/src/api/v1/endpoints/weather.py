@@ -12,12 +12,14 @@ router = APIRouter()
 
 @router.get("/current", summary="Current weather", response_model=WeatherOut)
 async def current_weather(location: str = Query(..., description="City or place name")):
+    # Kiểm tra API key trước khi gọi OpenWeather.
     if not settings.openweather_api_key:
         raise HTTPException(status_code=500, detail="Missing OPENWEATHER_API_KEY")
 
     client = OpenWeatherClient(api_key=settings.openweather_api_key)
     use_case = GetCurrentWeather(client)
     try:
+        # Use case chỉ ủy quyền cho client gọi API và map dữ liệu.
         weather = await use_case.execute(location)
     except httpx.HTTPStatusError as exc:
         status = exc.response.status_code

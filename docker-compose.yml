@@ -25,25 +25,24 @@ services:
       retries: 3
     restart: unless-stopped
 
-  # PostgreSQL for weather service
+  # PostgreSQL for middleware and itinerary services
   postgres:
     image: postgres:15-alpine
     container_name: trip-postgres
     networks:
       - trip-network
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: app
+      POSTGRES_USER: trip
+      POSTGRES_PASSWORD: trip
+      POSTGRES_DB: trip_hub
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user"]
+      test: ["CMD-SHELL", "pg_isready -U trip -d trip_hub"]
       interval: 10s
       timeout: 3s
       retries: 3
     restart: unless-stopped
-
   # Destination Service - Internal only
   destination-service:
     build: ./services/destination-service
@@ -69,11 +68,8 @@ services:
     env_file:
       - ./services/weather-service/.env.example
     environment:
-      DATABASE_URL: postgresql+psycopg2://user:password@postgres:5432/app
       REDIS_URL: redis://redis:6379/0
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
@@ -86,12 +82,17 @@ services:
 
   # Itinerary Service - Internal only
   itinerary-service:
-    build: ./services/itinerary-service
+    build: ./services/itinerary-service-json
     container_name: trip-itinerary-service
     networks:
       - trip-network
+    environment:
+      DATABASE_URL: postgresql+psycopg2://trip:trip@postgres:5432/trip_hub
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -132,6 +133,7 @@ services:
     env_file:
       - ./services/middleware-service/.env.example
     environment:
+      DATABASE_URL: postgresql+psycopg2://trip:trip@postgres:5432/trip_hub
       DESTINATION_SERVICE_URL: http://destination-service:8000
       WEATHER_SERVICE_URL: http://weather-service:8000
       ITINERARY_SERVICE_URL: http://itinerary-service:8000
@@ -144,6 +146,8 @@ services:
       itinerary-service:
         condition: service_healthy
       booking-service:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
