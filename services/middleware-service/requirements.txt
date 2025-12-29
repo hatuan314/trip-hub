@@ -4,3 +4,5 @@ httpx>=0.25.0
 pydantic>=2.6.0
 pydantic-settings>=2.0.0
 python-jose
+SQLAlchemy>=2.0.0
+psycopg2-binary>=2.9.9

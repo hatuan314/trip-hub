@@ -16,9 +16,14 @@ class ServiceRouter:
             return None
 
         normalized_path = path.lstrip("/")
+        if normalized_path.startswith("health"):
+            return f"{base_url}/{normalized_path}" if normalized_path else f"{base_url}/health"
         if normalized_path:
             return f"{base_url}{self.api_prefix}/{normalized_path}"
         return f"{base_url}{self.api_prefix}"
 
     def available_services(self) -> list[str]:
         return sorted(self.routes.keys())
+
+    def get_base_url(self, service_name: str) -> str | None:
+        return self.routes.get(service_name)

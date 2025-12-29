@@ -1,32 +1,158 @@
+version: '3.8'
+
+networks:
+  trip-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:
+
 services:
+  # Redis Cache for booking and weather services
+  redis:
+    image: redis:7-alpine
+    container_name: trip-redis
+    networks:
+      - trip-network
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # PostgreSQL for middleware and itinerary services
+  postgres:
+    image: postgres:15-alpine
+    container_name: trip-postgres
+    networks:
+      - trip-network
+    environment:
+      POSTGRES_USER: trip
+      POSTGRES_PASSWORD: trip
+      POSTGRES_DB: trip_hub
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trip -d trip_hub"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+  # Destination Service - Internal only
   destination-service:
     build: ./services/destination-service
-    ports:
-      - "8001:8000"
+    container_name: trip-destination-service
+    networks:
+      - trip-network
     env_file:
       - ./services/destination-service/.env.example
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
 
+  # Weather Service - Internal only
   weather-service:
     build: ./services/weather-service
-    ports:
-      - "8004:8000"
+    container_name: trip-weather-service
+    networks:
+      - trip-network
     env_file:
       - ./services/weather-service/.env.example
-  
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Itinerary Service - Internal only
   itinerary-service:
     build: ./services/itinerary-service-json
-    ports:
-      - "8003:8000"
+    container_name: trip-itinerary-service
+    networks:
+      - trip-network
+    environment:
+      DATABASE_URL: postgresql+psycopg2://trip:trip@postgres:5432/trip_hub
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
 
+  # Booking Service - Internal only
+  booking-service:
+    build: ./services/booking-service
+    container_name: trip-booking-service
+    networks:
+      - trip-network
+    env_file:
+      - ./services/booking-service/.env.example
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Middleware Service - API Gateway (Only exposed service)
   middleware-service:
     build: ./services/middleware-service
+    container_name: trip-middleware-service
     ports:
       - "9000:8000"
+    networks:
+      - trip-network
     env_file:
       - ./services/middleware-service/.env.example
     environment:
+      DATABASE_URL: postgresql+psycopg2://trip:trip@postgres:5432/trip_hub
       DESTINATION_SERVICE_URL: http://destination-service:8000
       WEATHER_SERVICE_URL: http://weather-service:8000
+      ITINERARY_SERVICE_URL: http://itinerary-service:8000
+      BOOKING_SERVICE_URL: http://booking-service:8000
     depends_on:
-      - destination-service
-      - weather-service
+      destination-service:
+        condition: service_healthy
+      weather-service:
+        condition: service_healthy
+      itinerary-service:
+        condition: service_healthy
+      booking-service:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

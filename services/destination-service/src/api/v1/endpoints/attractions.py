@@ -15,6 +15,7 @@ async def list_attractions(
     radius_m: int = Query(5000, description="Bán kính tìm kiếm (m)"),
     limit: int = Query(20, description="Số kết quả tối đa"),
 ):
+    # Geocode the input location, then query nearby tourism places.
     if not settings.geoapify_api_key:
         raise HTTPException(status_code=500, detail="Missing GEOAPIFY_API_KEY")
 

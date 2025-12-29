@@ -11,6 +11,7 @@ router = APIRouter()
 
 @router.get("/", summary="Search destinations", response_model=list[DestinationOut])
 async def search_destinations(query: str, country: str | None = None):
+    # Dùng các client external có sẵn để search đồng thời, rồi gộp kết quả.
     clients = []
     if settings.geoapify_api_key:
         clients.append(GeoapifyClient(api_key=settings.geoapify_api_key))
