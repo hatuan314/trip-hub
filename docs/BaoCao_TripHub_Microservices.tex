@@ -1,0 +1,1417 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[utf8]{vietnam}
+\usepackage[T5]{fontenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tocloft}
+\usepackage{enumitem}
+
+\geometry{left=3cm,right=2cm,top=2.5cm,bottom=2.5cm}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    commentstyle=\color{green!50!black},
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    showstringspaces=false
+}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={Báo cáo Hệ thống Microservices Trip Hub},
+    pdfpagemode=FullScreen,
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{0pt}{40pt}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    
+    {\Large HỌC VIÊN BƯU CHÍNH VIỄN THÔNG\\
+    KHOA ĐÀO TẠO SAU ĐẠI HỌC\par}
+    
+    \vspace{1cm}
+    
+    % ===== CHÈN LOGO TRƯỜNG TẠI ĐÂY =====
+    \includegraphics[width=0.25\linewidth]{logo-PTIT-826x1024.jpg}
+    \vspace{2cm}
+    % =====================================
+    
+        
+    {\huge\bfseries BÁO CÁO BÀI TẬP LỚN\par}
+    
+    \vspace{0.5cm}
+    
+    {\LARGE\bfseries BỘ MÔN: CÁC HỆ THỐNG PHÂN TÁN\par}
+    
+    \vspace{1cm}
+    
+    {\Large\itshape Nền Tảng Lập Kế Hoạch Du Lịch Microservices\par}
+    
+    \vspace{1cm}
+    
+    \begin{flushleft}
+    {\large
+    \textbf{Giảng viên hướng dẫn:} \hfill TS. Kim Ngọc Bách\\
+    \vspace{0.5cm}
+    \textbf{Lớp:} \hfill M25CQHT01-B\\
+    \vspace{0.5cm}
+    \textbf{Nhóm thực hiện:} \hfill 15\\
+    \vspace{0.5cm}
+    \textbf{Học viên thực hiện:}\\
+    \hspace{1cm} Hoàng Anh Tuấn \hfill B25CHHT061\\
+    \hspace{1cm} Đinh Hữu Tường \hfill B25CHHT067\\
+    \hspace{1cm} Nguyễn Đình Khả \hfill B25CHHT030\par
+    }
+    \end{flushleft}
+    
+    \vfill
+    
+    {\large Hà Nội, Tháng 12 Năm 2024\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\chapter{GIỚI THIỆU TỔNG QUAN}
+
+\section{Đặt vấn đề}
+
+Trong bối cảnh công nghệ phát triển nhanh chóng, kiến trúc microservices đã trở thành xu hướng chủ đạo trong việc xây dựng các hệ thống phân tán quy mô lớn. Trip Hub là một dự án minh họa triển khai hoàn chỉnh kiến trúc microservices áp dụng vào lĩnh vực du lịch, cung cấp nền tảng toàn diện cho việc lập kế hoạch và quản lý chuyến du lịch.
+
+Hệ thống được thiết kế với 5 microservices độc lập, mỗi service đảm nhận một chức năng cụ thể trong quy trình du lịch, từ khám phá điểm đến, dự báo thời tiết, đặt vé máy bay và khách sạn, đến quản lý lịch trình chi tiết. Các services tương tác với nhau thông qua API Gateway, tạo nên một hệ sinh thái phần mềm linh hoạt, dễ mở rộng và bảo trì.
+
+\section{Mục tiêu dự án}
+
+Dự án Trip Hub được xây dựng với các mục tiêu sau:
+
+\begin{itemize}[leftmargin=2cm]
+    \item \textbf{Nghiên cứu và triển khai:} Áp dụng kiến trúc microservices vào thực tế, hiểu rõ các nguyên tắc thiết kế và thách thức khi xây dựng hệ thống phân tán.
+    
+    \item \textbf{Tích hợp API bên ngoài:} Làm việc với các API thực tế từ OpenWeatherMap và Amadeus, học cách xử lý authentication, rate limiting và error handling.
+    
+    \item \textbf{API Gateway Pattern:} Triển khai gateway làm single entry point, centralized authentication và request routing.
+    
+    \item \textbf{Database per Service:} Áp dụng nguyên tắc polyglot persistence với PostgreSQL và MySQL cho các services khác nhau.
+    
+    \item \textbf{Containerization:} Sử dụng Docker và Docker Compose để đóng gói và orchestrate các microservices.
+    
+    \item \textbf{Clean Architecture:} Thiết kế mỗi service theo nguyên tắc separation of concerns, dependency injection và repository pattern.
+\end{itemize}
+
+\section{Công nghệ sử dụng}
+
+\subsection{Backend Framework}
+\begin{itemize}
+    \item \textbf{Python 3.11+}: Ngôn ngữ lập trình chính
+    \item \textbf{FastAPI}: Framework web hiện đại với hiệu năng cao, hỗ trợ async/await và tự động sinh OpenAPI documentation
+    \item \textbf{Pydantic}: Validation và serialization dữ liệu với type hints
+\end{itemize}
+
+\subsection{Databases}
+\begin{itemize}
+    \item \textbf{PostgreSQL}: Database cho user management và itinerary service
+    \item \textbf{MySQL}: Database cho destination service
+    \item \textbf{Redis}: Caching layer (đã config nhưng chưa implement)
+\end{itemize}
+
+\subsection{External APIs}
+\begin{itemize}
+    \item \textbf{Amadeus API}: Cung cấp dữ liệu chuyến bay và khách sạn
+    \item \textbf{OpenWeatherMap API}: Dữ liệu thời tiết hiện tại và dự báo
+    \item \textbf{Geoapify API}: Geocoding và places search
+\end{itemize}
+
+\subsection{DevOps \& Infrastructure}
+\begin{itemize}
+    \item \textbf{Docker \& Docker Compose}: Containerization và orchestration
+    \item \textbf{SQLAlchemy}: ORM cho Python
+    \item \textbf{httpx}: Async HTTP client
+    \item \textbf{JWT (JSON Web Tokens)}: Authentication mechanism
+\end{itemize}
+
+\chapter{PHÂN TÍCH YÊU CẦU HỆ THỐNG}
+
+\section{Yêu cầu chức năng}
+
+\subsection{User Management}
+\begin{itemize}
+    \item User registration với username và password
+    \item User login phát hành JWT token
+    \item JWT token-based authentication cho protected endpoints
+    \item Shared user database giữa Middleware và Itinerary services
+    \item Token expiration: 1 giờ
+\end{itemize}
+
+\subsection{Destination Discovery}
+\begin{itemize}
+    \item Browse danh sách điểm đến du lịch
+    \item Tìm kiếm destinations theo keyword (tên địa điểm, quốc gia)
+    \item Filter theo country, category, rating
+    \item Pagination support
+    \item Lấy thông tin chi tiết destination với description và attractions
+    \item Tìm kiếm điểm tham quan và khách sạn gần một địa điểm
+\end{itemize}
+
+\subsection{Weather Information}
+\begin{itemize}
+    \item Lấy thời tiết hiện tại cho một location
+    \item Dự báo thời tiết 5 ngày với interval 3 giờ
+    \item Hiển thị temperature, humidity, wind speed, conditions
+    \item Weather icons và descriptions
+    \item Support multiple cities worldwide
+\end{itemize}
+
+\subsection{Flight \& Hotel Booking}
+\begin{itemize}
+    \item Tìm kiếm chuyến bay giữa 2 sân bay (origin → destination)
+    \item Filter theo travel class (Economy, Business, First), non-stop flights, price range
+    \item Tìm kiếm khách sạn theo thành phố với city code (IATA)
+    \item Room availability và pricing với check-in/check-out dates
+    \item Support multiple adults, children, rooms
+    \item City/airport reference data với 50+ major cities
+    \item Real-time data từ Amadeus API
+\end{itemize}
+
+\subsection{Itinerary Planning}
+\begin{itemize}
+    \item Tạo travel itineraries với title, date range, description
+    \item Thêm activities vào itineraries với time slots
+    \item Date range management (start\_date → end\_date)
+    \item Activity scheduling với start\_time, end\_time, location
+    \item User-specific data isolation (chỉ xem được data của mình)
+    \item UUID primary keys cho uniqueness
+\end{itemize}
+
+\section{Yêu cầu phi chức năng}
+
+\subsection{Security}
+\begin{itemize}
+    \item JWT authentication cho protected endpoints
+    \item User data isolation (mỗi user chỉ truy cập data của mình)
+    \item CORS support cho web client
+    \item \textbf{Limitation hiện tại}: Plain text passwords (chỉ cho development, không production-ready)
+\end{itemize}
+
+\subsection{Performance}
+\begin{itemize}
+    \item External API caching (planned với Redis)
+    \item Connection pooling cho databases
+    \item Async/await pattern cho tất cả I/O operations
+    \item HTTP timeout handling (10-30 seconds)
+    \item Minimize blocking operations
+\end{itemize}
+
+\subsection{Scalability}
+\begin{itemize}
+    \item Stateless services (horizontal scaling ready)
+    \item Database per service pattern (independent scaling)
+    \item Containerized deployment với Docker
+    \item Microservices có thể deploy và scale độc lập
+\end{itemize}
+
+\subsection{Reliability}
+\begin{itemize}
+    \item Comprehensive error handling và logging
+    \item Health check endpoints cho mỗi service
+    \item Automatic database table creation on startup
+    \item Transaction support với SQLAlchemy
+    \item Graceful error responses cho API consumers
+\end{itemize}
+
+\subsection{Maintainability}
+\begin{itemize}
+    \item Clean Architecture patterns
+    \item Repository pattern cho data access layer
+    \item Dependency injection với FastAPI Depends
+    \item Type safety với Python type hints và Pydantic
+    \item Comprehensive documentation (README cho mỗi service)
+    \item Auto-generated OpenAPI/Swagger documentation
+\end{itemize}
+
+\chapter{KIẾN TRÚC MICROSERVICES}
+
+\section{Tổng quan kiến trúc}
+
+Hệ thống Trip Hub được thiết kế theo kiến trúc microservices với 5 services độc lập, tương tác qua HTTP/REST API thông qua một API Gateway. Kiến trúc này mang lại nhiều lợi ích:
+
+\begin{itemize}
+    \item \textbf{Loose Coupling}: Mỗi service độc lập, có thể phát triển và deploy riêng biệt
+    \item \textbf{Technology Flexibility}: Mỗi service có thể sử dụng database và công nghệ phù hợp
+    \item \textbf{Scalability}: Scale từng service độc lập dựa trên load
+    \item \textbf{Resilience}: Lỗi ở một service không làm sập toàn bộ hệ thống
+    \item \textbf{Team Organization}: Các team khác nhau phát triển các services khác nhau
+\end{itemize}
+
+\subsection{System Architecture Diagram}
+
+\begin{lstlisting}[language=bash, caption={Kiến trúc hệ thống Trip Hub}]
++----------------------------------------------------------+
+|                      Web Client                          |
+|                  (React/Vue/Angular)                     |
++---------------------------+------------------------------+
+                            | HTTP/REST (Port: 9000)
+                            v
++----------------------------------------------------------+
+|                 Middleware Service                       |
+|                   (API Gateway)                          |
+|  - JWT Authentication                                    |
+|  - Request Routing                                       |
+|  - Service Discovery                                     |
+|  - User Management                                       |
++--+------+------+------+-----------------------+----------+
+   |      |      |      |                       |
+   v      v      v      v                       v
++----+ +----+ +----+ +--------+           +----------+
+|Dest| |Weat| |Book| |Itinerary|          | External |
+|Svc | |Svc | |Svc | |Service |          |   APIs   |
+|    | |    | |    | |        |          |          |
+|MySQL|OpenW||Amadeus|PostgreSQL|          | Amadeus  |
+|    | |ther| |API | |        |          |OpenWeather|
++----+ +----+ +----+ +--------+           +----------+
+ 8001   8002   8000    8000                  External
+\end{lstlisting}
+
+\section{Services Overview}
+
+\begin{table}[h]
+\centering
+\caption{Tổng quan các Microservices}
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+\textbf{Service} & \textbf{Port} & \textbf{Database} & \textbf{External API} & \textbf{Responsibility} \\ \hline
+Middleware & 9000 & PostgreSQL & - & API Gateway, Auth, Routing \\ \hline
+Destination & 8001 & MySQL & Geoapify & Destination catalog \\ \hline
+Weather & 8002 & - & OpenWeatherMap & Weather forecasts \\ \hline
+Booking & 8000 & - & Amadeus & Flight/Hotel search \\ \hline
+Itinerary & 8000 & PostgreSQL & - & Trip planning \\ \hline
+\end{tabular}
+\end{table}
+
+\section{Các Design Patterns được áp dụng}
+
+\subsection{API Gateway Pattern}
+
+Middleware Service hoạt động như API Gateway, cung cấp:
+
+\begin{itemize}
+    \item \textbf{Single Entry Point}: Tất cả client requests qua port 9000
+    \item \textbf{Authentication}: JWT validation trước khi routing
+    \item \textbf{Service Discovery}: Map service names → URLs
+    \item \textbf{Request Proxying}: Forward requests với preserved data
+    \item \textbf{Error Handling}: Unified error responses (401, 404, 502, 504)
+    \item \textbf{CORS Handling}: Centralized CORS configuration
+\end{itemize}
+
+\subsection{Database per Service Pattern}
+
+Mỗi service có database riêng (hoặc không có database):
+
+\begin{itemize}
+    \item \textbf{Middleware \& Itinerary}: Shared PostgreSQL database \texttt{trip\_hub}
+    \item \textbf{Destination}: MySQL database
+    \item \textbf{Booking \& Weather}: Stateless, không có database (data từ external APIs)
+\end{itemize}
+
+\textit{Lưu ý}: Middleware và Itinerary services share database để đồng bộ user table, đây là compromise cho đơn giản hóa authentication.
+
+\subsection{Repository Pattern}
+
+Tất cả các services có database đều sử dụng Repository Pattern:
+
+\begin{lstlisting}[language=Python, caption={Repository Pattern Example}]
+class ItineraryRepo:
+    def __init__(self, session: Session):
+        self.session = session
+    
+    def create(self, username: str, payload) -> dict:
+        id = str(uuid.uuid4())
+        item = Itinerary(id=id, username=username, ...)
+        self.session.add(item)
+        self.session.commit()
+        self.session.refresh(item)
+        return self._to_dict(item)
+    
+    def list_by_user(self, username: str) -> List[dict]:
+        rows = self.session.query(Itinerary)\
+            .filter(Itinerary.username == username)\
+            .order_by(Itinerary.created_at.desc())\
+            .all()
+        return [self._to_dict(row) for row in rows]
+\end{lstlisting}
+
+\subsection{Clean Architecture}
+
+Mỗi service được tổ chức theo Clean Architecture:
+
+\begin{itemize}
+    \item \textbf{API Layer} (\texttt{api/}): HTTP endpoints, request/response handling
+    \item \textbf{Core Layer} (\texttt{core/}): Business logic, entities, use cases
+    \item \textbf{Infrastructure Layer} (\texttt{infrastructure/}): External APIs, databases
+    \item \textbf{Schemas Layer} (\texttt{schemas/}): Pydantic models cho validation
+\end{itemize}
+
+\chapter{CHI TIẾT CÁC MICROSERVICES}
+
+\section{Middleware Service (API Gateway)}
+
+\subsection{Vai trò và chức năng}
+
+Middleware Service là trái tim của hệ thống, đóng vai trò API Gateway với các chức năng:
+
+\begin{enumerate}
+    \item \textbf{Single Entry Point}: Port 9000 là điểm truy cập duy nhất từ client
+    \item \textbf{JWT Authentication}: Quản lý user registration, login và JWT tokens
+    \item \textbf{Request Routing}: Forward requests đến đúng downstream service
+    \item \textbf{Service Discovery}: Quản lý mapping giữa service names và URLs
+    \item \textbf{Error Translation}: Chuyển đổi errors từ downstream services
+\end{enumerate}
+
+\subsection{Kiến trúc chi tiết}
+
+\textbf{Components chính:}
+
+\begin{itemize}
+    \item \textbf{ServiceRouter}: Quản lý service registry và build target URLs
+    \item \textbf{Authentication System}: JWT creation và validation
+    \item \textbf{Proxy Mechanism}: Forward HTTP requests với httpx AsyncClient
+    \item \textbf{User Repository}: Quản lý user data trong PostgreSQL
+\end{itemize}
+
+\textbf{Authentication Flow:}
+
+\begin{lstlisting}[caption={JWT Authentication Flow}]
+1. User registers/login -> Middleware
+2. Middleware returns JWT token (expires in 1 hour)
+3. Client includes token in subsequent requests:
+   Authorization: Bearer <token>
+4. Middleware validates token
+5. If valid -> proxy to downstream service
+6. If invalid -> 401 Unauthorized
+\end{lstlisting}
+
+\subsection{Routing Rules}
+
+\begin{table}[h]
+\centering
+\caption{API Routing trong Middleware}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Client Request} & \textbf{Downstream Service} \\ \hline
+/api/v1/auth/* & Middleware (local) \\ \hline
+/api/v1/destination/* & Destination Service (8001) \\ \hline
+/api/v1/weather/* & Weather Service (8002) \\ \hline
+/api/v1/booking/* & Booking Service (8000) \\ \hline
+/api/v1/itinerary/* & Itinerary Service (8000) \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Security Considerations}
+
+\textbf{⚠️ Limitations hiện tại (Development Mode):}
+
+\begin{itemize}
+    \item Passwords được lưu dưới dạng plain text (KHÔNG hash!)
+    \item JWT secret key hardcoded: \texttt{"SECRET"}
+    \item Không có rate limiting
+    \item Không có HTTPS/TLS
+\end{itemize}
+
+\textbf{✅ Khuyến nghị cho Production:}
+
+\begin{itemize}
+    \item Implement bcrypt hoặc argon2 password hashing
+    \item Move JWT secret sang environment variables
+    \item Thêm rate limiting middleware
+    \item Enable HTTPS/TLS termination
+    \item Implement API key rotation
+\end{itemize}
+
+\section{Destination Service}
+
+\subsection{Chức năng}
+
+Destination Service quản lý thông tin điểm đến du lịch với các tính năng:
+
+\begin{itemize}
+    \item Tìm kiếm destinations theo keyword và country
+    \item Lấy chi tiết một destination cụ thể
+    \item Tìm attractions (điểm tham quan) gần một địa điểm
+    \item Tìm hotels gần một địa điểm
+    \item Tích hợp với Geoapify API (geocoding và places search)
+\end{itemize}
+
+\subsection{Database Schema (MySQL)}
+
+Service không lưu trữ data nội bộ, tất cả query trực tiếp từ Geoapify API. Configuration có MySQL nhưng không được sử dụng trong implementation hiện tại.
+
+\subsection{Geoapify Integration}
+
+\textbf{API Endpoints sử dụng:}
+
+\begin{enumerate}
+    \item \texttt{/v1/geocode/search}: Tìm kiếm địa điểm và chuyển thành tọa độ
+    \item \texttt{/v2/places}: Tìm places theo category (tourism, accommodation.hotel)
+\end{enumerate}
+
+\textbf{Flow tìm attractions:}
+
+\begin{lstlisting}[caption={Attractions Search Flow}]
+1. Client request: GET /api/v1/attractions?location=Paris
+2. Geocode "Paris" -> (lon, lat)
+3. Call Places API: 
+   - categories=tourism
+   - filter=circle:lon,lat,5000m
+   - limit=20
+4. Map results to Attraction entities
+5. Return list of attractions
+\end{lstlisting}
+
+\section{Weather Service}
+
+\subsection{Chức năng}
+
+Weather Service cung cấp thông tin thời tiết với OpenWeatherMap API:
+
+\begin{itemize}
+    \item Thời tiết hiện tại cho một location
+    \item Dự báo thời tiết 5 ngày (interval 3 giờ)
+    \item Temperature (Celsius), description, conditions
+    \item Stateless service (không cache)
+\end{itemize}
+
+\subsection{OpenWeather API Integration}
+
+\textbf{Endpoints:}
+
+\begin{enumerate}
+    \item \texttt{/weather}: Current weather
+    \item \texttt{/forecast}: 5-day forecast
+\end{enumerate}
+
+\textbf{API Request Example:}
+
+\begin{lstlisting}[language=bash]
+GET https://api.openweathermap.org/data/2.5/weather
+  ?q=Paris
+  &appid={api_key}
+  &units=metric
+\end{lstlisting}
+
+\subsection{Error Handling}
+
+Service map các HTTP errors từ OpenWeather:
+
+\begin{itemize}
+    \item 401 Unauthorized → Invalid API key
+    \item 404 Not Found → Location không tìm thấy
+    \item 5xx Server Error → OpenWeather API down
+\end{itemize}
+
+\section{Booking Service}
+
+\subsection{Chức năng}
+
+Booking Service là service phức tạp nhất, tích hợp với Amadeus API:
+
+\begin{itemize}
+    \item Flight search với origin, destination, dates, travel class
+    \item Hotel search theo city code
+    \item Cities reference data (50+ major cities)
+    \item OAuth2 token management cho Amadeus API
+    \item Real-time availability và pricing
+\end{itemize}
+
+\subsection{Amadeus API Integration}
+
+\textbf{Authentication Flow:}
+
+\begin{lstlisting}[caption={Amadeus OAuth2 Flow}]
+1. Request access token:
+   POST /v1/security/oauth2/token
+   grant_type=client_credentials
+   client_id={api_key}
+   client_secret={api_secret}
+
+2. Response: 
+   {
+     "access_token": "abc123...",
+     "expires_in": 1799
+   }
+
+3. Cache token in memory (expires - 60s buffer)
+
+4. Use token cho subsequent API calls:
+   Authorization: Bearer abc123...
+\end{lstlisting}
+
+\textbf{Flight Search:}
+
+\begin{lstlisting}[caption={Flight Search API}]
+GET /v2/shopping/flight-offers
+  ?originLocationCode=HAN
+  &destinationLocationCode=BKK
+  &departureDate=2025-02-15
+  &returnDate=2025-02-20
+  &adults=2
+  &currencyCode=USD
+\end{lstlisting}
+
+\textbf{Hotel Search (2-Step Process):}
+
+\begin{enumerate}
+    \item Call \texttt{/v1/reference-data/locations/hotels/by-city} để lấy hotel IDs
+    \item Call \texttt{/v3/shopping/hotel-offers} với hotel IDs để lấy pricing
+\end{enumerate}
+
+\textit{Lưu ý}: Amadeus không cho phép search hotels trực tiếp bằng city code, phải qua 2 bước.
+
+\subsection{Entities và Domain Models}
+
+\textbf{FlightEntity:}
+
+\begin{lstlisting}[language=Python]
+@dataclass
+class FlightEntity:
+    id: str
+    source: str
+    one_way: bool
+    segments: List[Segment]
+    price: Price
+    validating_airline_codes: List[str]
+    
+    def get_total_duration(self) -> str
+    def is_direct_flight(self) -> bool
+    def get_total_stops(self) -> int
+\end{lstlisting}
+
+\textbf{HotelEntity:}
+
+\begin{lstlisting}[language=Python]
+@dataclass
+class HotelEntity:
+    hotel_id: str
+    name: str
+    city_code: str
+    rating: Optional[str]
+    location: Optional[HotelLocation]
+    amenities: List[HotelAmenity]
+    rooms: List[Room]
+    
+    def get_min_price(self) -> Optional[float]
+    def has_amenity(self, amenity_name: str) -> bool
+\end{lstlisting}
+
+\section{Itinerary Service}
+
+\subsection{Chức năng}
+
+Itinerary Service quản lý lịch trình du lịch của users:
+
+\begin{itemize}
+    \item User authentication (shared với Middleware)
+    \item CRUD operations cho itineraries
+    \item CRUD operations cho activities trong itinerary
+    \item User data isolation (chỉ xem data của mình)
+    \item UUID primary keys
+\end{itemize}
+
+\subsection{Database Schema (PostgreSQL)}
+
+\textbf{Table: users (shared với Middleware)}
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(150) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+\end{lstlisting}
+
+\textbf{Table: itineraries}
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE itineraries (
+    id VARCHAR(36) PRIMARY KEY,  -- UUID
+    username VARCHAR(150) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+\end{lstlisting}
+
+\textbf{Table: activities}
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE activities (
+    id VARCHAR(36) PRIMARY KEY,  -- UUID
+    itinerary_id VARCHAR(36) NOT NULL,
+    username VARCHAR(150) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    note TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+\end{lstlisting}
+
+\subsection{Repository Pattern Implementation}
+
+\begin{lstlisting}[language=Python, caption={Itinerary Repository}]
+class ItineraryRepo:
+    def __init__(self, session: Session):
+        self.session = session
+    
+    def create(self, username: str, payload: ItineraryCreate):
+        id = str(uuid.uuid4())
+        item = Itinerary(
+            id=id,
+            username=username,
+            title=payload.title,
+            start_date=payload.start_date,
+            end_date=payload.end_date,
+            description=payload.description
+        )
+        self.session.add(item)
+        self.session.commit()
+        self.session.refresh(item)
+        return self._to_dict(item)
+    
+    def list_by_user(self, username: str):
+        rows = self.session.query(Itinerary)\
+            .filter(Itinerary.username == username)\
+            .order_by(Itinerary.created_at.desc())\
+            .all()
+        return [self._to_dict(row) for row in rows]
+\end{lstlisting}
+
+\chapter{DEPLOYMENT VÀ TESTING}
+
+\section{Docker Containerization}
+
+\subsection{Docker Compose Configuration}
+
+Toàn bộ hệ thống được containerize với Docker Compose:
+
+\begin{lstlisting}[language=yaml, caption={docker-compose.yml (simplified)}]
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: trip_hub
+      POSTGRES_USER: trip
+      POSTGRES_PASSWORD: trip
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: destination_db
+      MYSQL_USER: destination
+      MYSQL_PASSWORD: destination
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  middleware-service:
+    build: ./services/middleware-service
+    ports:
+      - "9000:9000"
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://trip:trip@postgres:5432/trip_hub
+
+  booking-service:
+    build: ./services/booking-service
+    ports:
+      - "8000:8000"
+    environment:
+      AMADEUS_API_KEY: ${AMADEUS_API_KEY}
+      AMADEUS_API_SECRET: ${AMADEUS_API_SECRET}
+
+  # ... other services ...
+
+volumes:
+  postgres-data:
+  mysql-data:
+  redis-data:
+\end{lstlisting}
+
+\subsection{Deployment Steps}
+
+\begin{lstlisting}[language=bash, caption={Quick Start Commands}]
+# Clone repository
+git clone <repo-url>
+cd trip-hub
+
+# Start all services
+docker compose up -d --build
+
+# Verify services
+docker compose ps
+
+# Check logs
+docker compose logs -f middleware-service
+
+# Stop all services
+docker compose down
+
+# Stop and remove volumes
+docker compose down -v
+\end{lstlisting}
+
+\section{Health Checks}
+
+Mỗi service có health check endpoint:
+
+\begin{table}[h]
+\centering
+\caption{Health Check Endpoints}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Service} & \textbf{Health Check URL} \\ \hline
+Middleware & http://localhost:9000/health \\ \hline
+Destination & http://localhost:8001/health \\ \hline
+Weather & http://localhost:8002/health \\ \hline
+Booking & http://localhost:8000/health \\ \hline
+Itinerary & http://localhost:8003/health \\ \hline
+\end{tabular}
+\end{table}
+
+\section{API Documentation}
+
+FastAPI tự động sinh Swagger UI documentation:
+
+\begin{itemize}
+    \item \textbf{Middleware}: http://localhost:9000/api/docs
+    \item \textbf{Destination}: http://localhost:8001/api/docs
+    \item \textbf{Weather}: http://localhost:8002/api/docs
+    \item \textbf{Booking}: http://localhost:8000/api/docs
+    \item \textbf{Itinerary}: http://localhost:8003/api/docs
+\end{itemize}
+
+\section{Testing Strategy}
+
+\subsection{Manual Testing}
+
+\textbf{Complete User Journey Test:}
+
+\begin{lstlisting}[language=bash, caption={End-to-End Testing}]
+# 1. Register user
+curl -X POST http://localhost:9000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "traveler1", "password": "pass123"}'
+
+# 2. Login
+TOKEN=$(curl -X POST http://localhost:9000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "traveler1", "password": "pass123"}' \
+  | jq -r '.access_token')
+
+# 3. Search destinations
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:9000/api/v1/destination/destinations?query=paris"
+
+# 4. Get weather forecast
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:9000/api/v1/weather/forecast?location=Paris"
+
+# 5. Search flights
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  "http://localhost:9000/api/v1/booking/flights/search" \
+  -d '{
+    "origin": "HAN",
+    "destination": "CDG",
+    "departure_date": "2025-06-01",
+    "return_date": "2025-06-07",
+    "adults": 2,
+    "currency": "USD"
+  }'
+
+# 6. Create itinerary
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  "http://localhost:9000/api/v1/itinerary/itineraries" \
+  -d '{
+    "title": "Paris Trip",
+    "start_date": "2025-06-01",
+    "end_date": "2025-06-07",
+    "description": "Summer vacation"
+  }'
+\end{lstlisting}
+
+\subsection{Automated Testing (Planned)}
+
+\textbf{Future improvements:}
+
+\begin{itemize}
+    \item Unit tests cho mỗi service với pytest
+    \item Integration tests với test containers
+    \item Contract testing giữa services
+    \item Load testing với Locust hoặc k6
+    \item E2E tests với Playwright
+\end{itemize}
+
+\chapter{PHÂN TÍCH VÀ ĐÁNH GIÁ}
+
+\section{Ưu điểm của hệ thống}
+
+\subsection{Kiến trúc}
+
+\begin{enumerate}
+    \item \textbf{Loose Coupling}: Các services độc lập, thay đổi một service không ảnh hưởng services khác
+    \item \textbf{Technology Diversity}: Mỗi service có thể chọn database phù hợp (PostgreSQL, MySQL)
+    \item \textbf{Independent Deployment}: Deploy và scale từng service riêng biệt
+    \item \textbf{Clear Boundaries}: Mỗi service có responsibility rõ ràng
+\end{enumerate}
+
+\subsection{Clean Architecture}
+
+\begin{enumerate}
+    \item \textbf{Separation of Concerns}: API, business logic, infrastructure tách biệt
+    \item \textbf{Testability}: Dễ dàng unit test với mock dependencies
+    \item \textbf{Maintainability}: Code dễ đọc, dễ bảo trì
+    \item \textbf{Type Safety}: Python type hints và Pydantic validation
+\end{enumerate}
+
+\subsection{API Gateway Pattern}
+
+\begin{enumerate}
+    \item \textbf{Single Entry Point}: Đơn giản hóa client integration
+    \item \textbf{Centralized Auth}: JWT validation ở một nơi
+    \item \textbf{Service Abstraction}: Client không cần biết internal topology
+    \item \textbf{Error Handling}: Consistent error responses
+\end{enumerate}
+
+\section{Hạn chế và vấn đề}
+
+\subsection{Security Issues}
+
+\begin{enumerate}
+    \item \textbf{⚠️ CRITICAL - Plain Text Passwords}: 
+    \begin{itemize}
+        \item Passwords không được hash, lưu trữ dạng plain text
+        \item Cực kỳ nguy hiểm cho production
+        \item Cần implement bcrypt/argon2 ngay lập tức
+    \end{itemize}
+    
+    \item \textbf{⚠️ CRITICAL - Hardcoded Secrets}:
+    \begin{itemize}
+        \item JWT secret = "SECRET" hardcoded trong code
+        \item Amadeus API credentials trong code
+        \item Cần move tất cả secrets sang environment variables
+    \end{itemize}
+    
+    \item \textbf{No Rate Limiting}: Vulnerable to brute force attacks
+    
+    \item \textbf{No HTTPS}: Production cần TLS/SSL termination
+\end{enumerate}
+
+\subsection{Architecture Limitations}
+
+\begin{enumerate}
+    \item \textbf{Shared Database}: Middleware và Itinerary share PostgreSQL, vi phạm "Database per Service"
+    
+    \item \textbf{Synchronous Communication}: Chỉ có HTTP/REST, không có message queue
+    
+    \item \textbf{No Circuit Breaker}: Khi downstream service fail, không có protection
+    
+    \item \textbf{No Service Discovery}: Static configuration, không dynamic
+    
+    \item \textbf{No Distributed Tracing}: Khó debug cross-service issues
+\end{enumerate}
+
+\subsection{Missing Features}
+
+\begin{enumerate}
+    \item \textbf{No Caching}: Redis configured nhưng chưa implement
+    \item \textbf{No Event Bus}: Không có async messaging
+    \item \textbf{No CRUD Complete}: Itinerary service chỉ có Create và Read
+    \item \textbf{No Data Validation}: Không validate date ranges, time conflicts
+    \item \textbf{No Pagination}: List endpoints không có pagination
+\end{enumerate}
+
+\section{Bài học kinh nghiệm}
+
+\subsection{Microservices Best Practices}
+
+\begin{enumerate}
+    \item \textbf{Start Simple}: Không cần phức tạp hóa ban đầu, có thể bắt đầu với monolith
+    \item \textbf{API Gateway Essential}: Single entry point rất quan trọng
+    \item \textbf{Database per Service}: Nên tuân thủ nghiêm ngặt để tránh coupling
+    \item \textbf{External API Challenges}: Rate limits, timeouts, errors phải handle cẩn thận
+\end{enumerate}
+
+\subsection{Security Lessons}
+
+\begin{enumerate}
+    \item \textbf{Security First}: Không bao giờ compromise security vì "convenience"
+    \item \textbf{Use Secrets Management}: Vault, AWS Secrets Manager, etc.
+    \item \textbf{Implement Proper Auth}: OAuth2, OpenID Connect cho production
+\end{enumerate}
+
+\subsection{Development Process}
+
+\begin{enumerate}
+    \item \textbf{Documentation Important}: README chi tiết giúp onboarding dễ dàng
+    \item \textbf{Docker Compose Powerful}: Orchestration nhiều services rất hiệu quả
+    \item \textbf{OpenAPI/Swagger}: Auto-generated docs tiết kiệm thời gian
+\end{enumerate}
+
+\chapter{HƯỚNG PHÁT TRIỂN}
+
+\section{Improvements ngắn hạn}
+
+\subsection{Security Enhancements (Priority 1)}
+
+\begin{lstlisting}[language=Python, caption={Implement Password Hashing}]
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)
+\end{lstlisting}
+
+\begin{itemize}
+    \item Move JWT secret sang environment variables
+    \item Implement rate limiting với slowapi hoặc Redis
+    \item Add HTTPS/TLS với nginx reverse proxy
+    \item Implement refresh tokens
+\end{itemize}
+
+\subsection{Caching Layer}
+
+\begin{itemize}
+    \item Implement Redis caching cho external API responses
+    \item Cache flight search results (TTL: 15 minutes)
+    \item Cache weather data (TTL: 30 minutes)
+    \item Cache destination search (TTL: 1 hour)
+\end{itemize}
+
+\subsection{Complete CRUD Operations}
+
+\begin{itemize}
+    \item Add UPDATE endpoints cho itineraries và activities
+    \item Add DELETE endpoints với soft delete
+    \item Add validation cho date ranges và time conflicts
+    \item Implement pagination cho list endpoints
+\end{itemize}
+
+\section{Improvements dài hạn}
+
+\subsection{Resilience Patterns}
+
+\begin{enumerate}
+    \item \textbf{Circuit Breaker}:
+    \begin{itemize}
+        \item Implement với pybreaker library
+        \item Prevent cascading failures
+        \item Fallback responses khi service down
+    \end{itemize}
+    
+    \item \textbf{Retry Logic}:
+    \begin{itemize}
+        \item Exponential backoff cho failed requests
+        \item Configurable retry attempts
+        \item Idempotency keys
+    \end{itemize}
+    
+    \item \textbf{Bulkhead Pattern}:
+    \begin{itemize}
+        \item Isolate thread pools cho external API calls
+        \item Prevent resource exhaustion
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Observability}
+
+\begin{enumerate}
+    \item \textbf{Centralized Logging}:
+    \begin{itemize}
+        \item ELK stack (Elasticsearch, Logstash, Kibana)
+        \item Structured logging với JSON format
+        \item Correlation IDs cho cross-service tracing
+    \end{itemize}
+    
+    \item \textbf{Distributed Tracing}:
+    \begin{itemize}
+        \item Jaeger hoặc Zipkin
+        \item OpenTelemetry instrumentation
+        \item Visualize request flows
+    \end{itemize}
+    
+    \item \textbf{Metrics}:
+    \begin{itemize}
+        \item Prometheus cho metrics collection
+        \item Grafana dashboards
+        \item Application metrics (latency, throughput, errors)
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Event-Driven Architecture}
+
+\begin{enumerate}
+    \item \textbf{Message Queue}:
+    \begin{itemize}
+        \item RabbitMQ hoặc Apache Kafka
+        \item Async communication giữa services
+        \item Event sourcing pattern
+    \end{itemize}
+    
+    \item \textbf{Use Cases}:
+    \begin{itemize}
+        \item User created event → sync sang các services
+        \item Itinerary created → send notifications
+        \item Booking confirmed → update multiple systems
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Advanced Features}
+
+\begin{enumerate}
+    \item \textbf{Payment Integration}:
+    \begin{itemize}
+        \item Stripe hoặc PayPal integration
+        \item Secure payment processing
+        \item PCI compliance
+    \end{itemize}
+    
+    \item \textbf{Notification Service}:
+    \begin{itemize}
+        \item Email notifications (SendGrid)
+        \item SMS notifications (Twilio)
+        \item Push notifications
+    \end{itemize}
+    
+    \item \textbf{Recommendation Engine}:
+    \begin{itemize}
+        \item ML-based destination recommendations
+        \item Collaborative filtering
+        \item Personalized suggestions
+    \end{itemize}
+\end{enumerate}
+
+\section{DevOps Improvements}
+
+\subsection{CI/CD Pipeline}
+
+\begin{lstlisting}[language=yaml, caption={GitHub Actions CI/CD}]
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run tests
+        run: |
+          docker-compose up -d
+          pytest tests/
+      
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build and push Docker images
+        run: |
+          docker build -t trip-hub/middleware:latest .
+          docker push trip-hub/middleware:latest
+  
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    steps:
+      - name: Deploy to Kubernetes
+        run: kubectl apply -f k8s/
+\end{lstlisting}
+
+\subsection{Kubernetes Deployment}
+
+\begin{itemize}
+    \item Migrate từ Docker Compose sang Kubernetes
+    \item Horizontal Pod Autoscaling
+    \item Load balancing với Ingress
+    \item ConfigMaps và Secrets management
+    \item Health checks và liveness probes
+\end{itemize}
+
+\subsection{Monitoring \& Alerting}
+
+\begin{itemize}
+    \item PagerDuty hoặc Opsgenie integration
+    \item Alert rules cho:
+    \begin{itemize}
+        \item High error rates
+        \item Response time degradation
+        \item Service unavailability
+        \item Database connection issues
+    \end{itemize}
+\end{itemize}
+
+\chapter{KẾT LUẬN}
+
+\section{Tổng kết}
+
+Dự án Trip Hub đã thành công trong việc triển khai một hệ thống microservices hoàn chỉnh với 5 services độc lập, minh họa các nguyên tắc và best practices của kiến trúc phân tán. Hệ thống cung cấp đầy đủ tính năng cho một nền tảng du lịch, từ khám phá điểm đến, kiểm tra thời tiết, đặt vé máy bay và khách sạn, đến quản lý lịch trình chi tiết.
+
+\subsection{Thành tựu đạt được}
+
+\begin{enumerate}
+    \item \textbf{Kiến trúc Microservices}: Successfully implement API Gateway pattern, service isolation, và database per service
+    
+    \item \textbf{External API Integration}: Tích hợp với 3 external APIs (Amadeus, OpenWeatherMap, Geoapify) với proper authentication và error handling
+    
+    \item \textbf{Clean Architecture}: Áp dụng separation of concerns, dependency injection, repository pattern trong tất cả services
+    
+    \item \textbf{Containerization}: Hoàn chỉnh Docker Compose orchestration với multiple services và databases
+    
+    \item \textbf{Documentation}: Comprehensive README files và auto-generated OpenAPI documentation
+\end{enumerate}
+
+\subsection{Kiến thức thu được}
+
+Qua dự án này, chúng ta đã học được:
+
+\begin{itemize}
+    \item Thiết kế và triển khai microservices từ đầu
+    \item Trade-offs giữa microservices và monolithic architecture
+    \item Challenges trong distributed systems (network latency, partial failures, data consistency)
+    \item API Gateway pattern và centralized authentication
+    \item Working với external APIs và handling rate limits
+    \item Docker containerization và orchestration
+    \item Security best practices (và những gì KHÔNG nên làm)
+\end{itemize}
+
+\section{Đánh giá khách quan}
+
+\subsection{Điểm mạnh}
+
+\begin{itemize}
+    \item ✅ Kiến trúc rõ ràng, dễ hiểu
+    \item ✅ Code quality tốt với type hints và documentation
+    \item ✅ FastAPI framework hiện đại và hiệu quả
+    \item ✅ Docker Compose setup đơn giản và functional
+    \item ✅ Real-world external API integration
+\end{itemize}
+
+\subsection{Điểm yếu}
+
+\begin{itemize}
+    \item ❌ Critical security issues (plain text passwords, hardcoded secrets)
+    \item ❌ Thiếu automated testing
+    \item ❌ Không có caching layer
+    \item ❌ Limited error resilience patterns
+    \item ❌ Shared database giữa 2 services
+\end{itemize}
+
+\section{Khuyến nghị}
+
+\subsection{Cho Development}
+
+\begin{enumerate}
+    \item \textbf{Fix security issues ngay lập tức} trước khi deploy production
+    \item \textbf{Implement comprehensive testing} (unit, integration, E2E)
+    \item \textbf{Add caching layer} để giảm external API calls
+    \item \textbf{Implement monitoring và logging} để debug production issues
+\end{enumerate}
+
+\subsection{Cho Production Deployment}
+
+\begin{enumerate}
+    \item \textbf{Kubernetes deployment} thay vì Docker Compose
+    \item \textbf{Proper secrets management} với Vault hoặc AWS Secrets Manager
+    \item \textbf{HTTPS/TLS termination} với nginx hoặc cloud load balancer
+    \item \textbf{Rate limiting và throttling} để protect APIs
+    \item \textbf{Database backups và disaster recovery plan}
+    \item \textbf{Monitoring và alerting} với Prometheus/Grafana
+\end{enumerate}
+
+\section{Lời kết}
+
+Trip Hub là một dự án học tập có giá trị, demonstrate kiến thức về microservices architecture, distributed systems, và modern software engineering practices. Mặc dù có một số limitations (đặc biệt về security), dự án đã thành công trong việc minh họa cách xây dựng một hệ thống phân tán functional và có thể mở rộng.
+
+Các kiến thức và kinh nghiệm thu được từ dự án này là nền tảng quan trọng cho việc phát triển các production-grade microservices systems trong tương lai. Với các improvements đã đề xuất, hệ thống hoàn toàn có thể được nâng cấp lên production-ready status.
+
+\begin{center}
+\textit{--- HẾT ---}
+\end{center}
+
+\newpage
+
+\appendix
+
+\chapter{TÀI LIỆU THAM KHẢO}
+
+\begin{enumerate}
+    \item FastAPI Documentation: https://fastapi.tiangolo.com/
+    \item Microservices Patterns - Chris Richardson
+    \item Building Microservices - Sam Newman
+    \item Amadeus for Developers: https://developers.amadeus.com/
+    \item OpenWeatherMap API: https://openweathermap.org/api
+    \item Docker Documentation: https://docs.docker.com/
+    \item PostgreSQL Documentation: https://www.postgresql.org/docs/
+    \item Python Type Hints: https://docs.python.org/3/library/typing.html
+    \item OAuth 2.0 RFC: https://tools.ietf.org/html/rfc6749
+    \item RESTful API Design Best Practices
+\end{enumerate}
+
+\chapter{CODE SNIPPETS QUAN TRỌNG}
+
+\section{API Gateway Proxy Implementation}
+
+\begin{lstlisting}[language=Python, caption={Proxy Request Handler}]
+async def proxy_request(
+    service: str, 
+    request: Request, 
+    path: str = ""
+) -> Response:
+    target_url = service_router.build_target(service, path)
+    if not target_url:
+        raise HTTPException(404, f"Unknown service '{service}'")
+    
+    headers = {k: v for k, v in request.headers.items() 
+               if k.lower() != "host"}
+    body = await request.body()
+    
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            upstream_response = await client.request(
+                method=request.method,
+                url=target_url,
+                content=body,
+                params=request.query_params,
+                headers=headers
+            )
+        
+        filtered_headers = {
+            k: v for k, v in upstream_response.headers.items()
+            if k.lower() not in excluded_headers
+        }
+        
+        return Response(
+            content=upstream_response.content,
+            status_code=upstream_response.status_code,
+            headers=filtered_headers
+        )
+        
+    except httpx.TimeoutException:
+        raise HTTPException(504, f"Request to {service} timed out")
+    except httpx.HTTPError:
+        raise HTTPException(502, f"Error forwarding to {service}")
+\end{lstlisting}
+
+\section{JWT Authentication}
+
+\begin{lstlisting}[language=Python, caption={JWT Token Management}]
+from jose import jwt, JWTError
+from datetime import datetime, timedelta
+
+SECRET_KEY = "SECRET"  # Should be in env vars!
+ALGORITHM = "HS256"
+
+def create_access_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(hours=1)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def get_current_user(credentials: HTTPAuthorizationCredentials):
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise HTTPException(401, "Invalid token")
+        return {"username": username}
+    except JWTError:
+        raise HTTPException(401, "Invalid token")
+\end{lstlisting}
+
+\section{Repository Pattern}
+
+\begin{lstlisting}[language=Python, caption={SQLAlchemy Repository}]
+from sqlalchemy.orm import Session
+import uuid
+
+class ItineraryRepo:
+    def __init__(self, session: Session):
+        self.session = session
+    
+    def create(self, username: str, payload) -> dict:
+        id = str(uuid.uuid4())
+        item = Itinerary(
+            id=id,
+            username=username,
+            title=payload.title,
+            start_date=payload.start_date,
+            end_date=payload.end_date,
+            description=payload.description
+        )
+        self.session.add(item)
+        self.session.commit()
+        self.session.refresh(item)
+        return {
+            "id": item.id,
+            "user": item.username,
+            "title": item.title,
+            "start_date": item.start_date.isoformat(),
+            "end_date": item.end_date.isoformat(),
+            "description": item.description
+        }
+    
+    def list_by_user(self, username: str) -> List[dict]:
+        rows = self.session.query(Itinerary)\
+            .filter(Itinerary.username == username)\
+            .order_by(Itinerary.created_at.desc())\
+            .all()
+        return [self._to_dict(row) for row in rows]
+\end{lstlisting}
+
+\end{document}
